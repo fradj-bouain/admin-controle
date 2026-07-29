@@ -59,14 +59,19 @@ public class SecurityConfig {
     }
 
     /**
-     * Autorise le frontend Angular (dev server sur un port différent) à
-     * appeler l'API. À restreindre à la vraie origine de production avant
-     * déploiement.
+     * Autorise le frontend Angular à appeler l'API : le dev server local et
+     * l'origine de production Railway. Même si le navigateur passe par le
+     * proxy nginx du frontend (même origine du point de vue du navigateur),
+     * nginx retransmet l'en-tête Origin d'origine au backend, donc Spring
+     * l'évalue quand même — la liste doit rester exacte.
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+        configuration.setAllowedOrigins(List.of(
+            "http://localhost:4200",
+            "https://admin-controle-front-production.up.railway.app"
+        ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
