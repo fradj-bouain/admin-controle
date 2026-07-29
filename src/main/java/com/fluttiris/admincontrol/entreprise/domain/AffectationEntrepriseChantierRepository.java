@@ -12,7 +12,10 @@ public interface AffectationEntrepriseChantierRepository extends JpaRepository<A
 
     List<AffectationEntrepriseChantier> findByEntrepriseId(UUID entrepriseId);
 
-    Optional<AffectationEntrepriseChantier> findByChantierIdAndEntrepriseId(UUID chantierId, UUID entrepriseId);
+    List<AffectationEntrepriseChantier> findByChantierIdAndEntrepriseId(UUID chantierId, UUID entrepriseId);
+
+    Optional<AffectationEntrepriseChantier> findByChantierIdAndEntrepriseIdAndRole(UUID chantierId, UUID entrepriseId,
+                                                                                     RoleEntreprise role);
 
     List<AffectationEntrepriseChantier> findByAffectationParenteId(UUID affectationParenteId);
 }

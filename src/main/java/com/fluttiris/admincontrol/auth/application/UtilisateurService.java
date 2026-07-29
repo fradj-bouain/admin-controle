@@ -22,12 +22,12 @@ public class UtilisateurService {
     private final PasswordEncoder passwordEncoder;
 
     public Utilisateur creer(String username, String password, String civilite, String nom, String prenom,
-                              String email, Set<String> roles, UUID entrepriseId, UUID clientId) {
+                              String email, Set<String> roles, UUID entrepriseId, UUID clientId, UUID controleTiersId) {
         if (utilisateurRepository.existsByUsername(username)) {
             throw new BusinessRuleViolationException("Ce nom d'utilisateur existe déjà");
         }
         Utilisateur utilisateur = Utilisateur.creer(username, passwordEncoder.encode(password), civilite, nom,
-            prenom, email, roles, entrepriseId, clientId);
+            prenom, email, roles, entrepriseId, clientId, controleTiersId);
         return utilisateurRepository.save(utilisateur);
     }
 

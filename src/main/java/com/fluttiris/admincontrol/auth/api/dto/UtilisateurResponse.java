@@ -15,10 +15,11 @@ public record UtilisateurResponse(
     Set<String> roles,
     UUID entrepriseId,
     UUID clientId,
+    UUID controleTiersId,
     boolean actif
 ) {
     public static UtilisateurResponse from(Utilisateur u) {
         return new UtilisateurResponse(u.getId(), u.getUsername(), u.getCivilite(), u.getNom(), u.getPrenom(),
-            u.getEmail(), u.getRoles(), u.getEntrepriseId(), u.getClientId(), u.isActif());
+            u.getEmail(), u.getRoles(), u.getEntrepriseId(), u.getClientId(), u.getControleTiersId(), u.isActif());
     }
 }

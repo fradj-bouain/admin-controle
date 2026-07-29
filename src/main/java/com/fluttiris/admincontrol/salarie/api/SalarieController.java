@@ -5,6 +5,7 @@ import com.fluttiris.admincontrol.salarie.api.dto.CreateSalarieRequest;
 import com.fluttiris.admincontrol.salarie.api.dto.SalarieResponse;
 import com.fluttiris.admincontrol.salarie.application.AffectationSalarieChantierService;
 import com.fluttiris.admincontrol.salarie.application.SalarieService;
+import com.fluttiris.admincontrol.common.security.CurrentUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,9 +23,11 @@ public class SalarieController {
 
     private final SalarieService salarieService;
     private final AffectationSalarieChantierService affectationSalarieChantierService;
+    private final CurrentUser currentUser;
 
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or "
+        + "(@currentUser.entrepriseId().isPresent() and @currentUser.entrepriseId().get().equals(#request.entrepriseEmployeurId()))")
     public ResponseEntity<SalarieResponse> creer(@Valid @RequestBody CreateSalarieRequest request) {
         var salarie = salarieService.creer(request.nom(), request.prenom(), request.dateNaissance(),
             request.nationalitePaysId(), request.entrepriseEmployeurId(), request.typeSalarieId(),
@@ -33,7 +36,9 @@ public class SalarieController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or "
+        + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.salarieAppartientAEntreprise(#id, @currentUser.entrepriseId().get()) "
+        + "and @currentUser.entrepriseId().get().equals(#request.entrepriseEmployeurId()))")
     public SalarieResponse modifier(@PathVariable UUID id, @Valid @RequestBody CreateSalarieRequest request) {
         var salarie = salarieService.modifier(id, request.nom(), request.prenom(), request.dateNaissance(),
             request.nationalitePaysId(), request.entrepriseEmployeurId(), request.typeSalarieId(),
@@ -42,7 +47,8 @@ public class SalarieController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or @currentUser.entrepriseId().isEmpty() or "
+        + "@scopeAuthz.salarieAppartientAEntreprise(#id, @currentUser.entrepriseId().get())")
     public SalarieResponse obtenir(@PathVariable UUID id) {
         return SalarieResponse.from(salarieService.obtenir(id));
     }
@@ -50,17 +56,22 @@ public class SalarieController {
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public List<SalarieResponse> lister(@RequestParam(required = false) UUID entrepriseId) {
-        return salarieService.lister(entrepriseId).stream().map(SalarieResponse::from).toList();
+        // Un compte Entreprise est toujours ramené à SON propre périmètre, même
+        // s'il passe un autre entrepriseId en paramètre.
+        UUID scope = currentUser.entrepriseId().orElse(entrepriseId);
+        return salarieService.lister(scope).stream().map(SalarieResponse::from).toList();
     }
 
     @PostMapping("/{id}/desactiver")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or "
+        + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.salarieAppartientAEntreprise(#id, @currentUser.entrepriseId().get()))")
     public SalarieResponse desactiver(@PathVariable UUID id) {
         return SalarieResponse.from(salarieService.desactiver(id));
     }
 
     @PostMapping("/{id}/activer")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or "
+        + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.salarieAppartientAEntreprise(#id, @currentUser.entrepriseId().get()))")
     public SalarieResponse activer(@PathVariable UUID id) {
         return SalarieResponse.from(salarieService.activer(id));
     }

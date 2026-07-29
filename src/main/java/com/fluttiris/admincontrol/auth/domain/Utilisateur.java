@@ -62,11 +62,16 @@ public class Utilisateur extends Auditable {
     @Column(name = "client_id")
     private UUID clientId;
 
+    /** Renseigné pour un compte Contrôleur, scope sur les contrôles de cet organisme (ControleTiers). */
+    @Column(name = "controle_tiers_id")
+    private UUID controleTiersId;
+
     @Column(nullable = false)
     private boolean actif = true;
 
     public static Utilisateur creer(String username, String passwordHash, String civilite, String nom,
-                                     String prenom, String email, Set<String> roles, UUID entrepriseId, UUID clientId) {
+                                     String prenom, String email, Set<String> roles, UUID entrepriseId, UUID clientId,
+                                     UUID controleTiersId) {
         Utilisateur utilisateur = new Utilisateur();
         utilisateur.username = username;
         utilisateur.passwordHash = passwordHash;
@@ -77,6 +82,7 @@ public class Utilisateur extends Auditable {
         utilisateur.roles = new HashSet<>(roles);
         utilisateur.entrepriseId = entrepriseId;
         utilisateur.clientId = clientId;
+        utilisateur.controleTiersId = controleTiersId;
         return utilisateur;
     }
 }

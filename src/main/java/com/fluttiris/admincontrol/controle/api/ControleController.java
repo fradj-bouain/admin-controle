@@ -25,17 +25,26 @@ public class ControleController {
     private final CurrentUser currentUser;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or @currentUser.controleTiersId().isPresent()")
     public ResponseEntity<ControleResponse> creer(@Valid @RequestBody CreateControleRequest request) {
+        // Un compte Contrôleur ne peut créer un contrôle que pour SON organisme,
+        // même s'il passe un autre controleTiersId dans la requête.
+        UUID controleTiersId = currentUser.controleTiersId().orElse(request.controleTiersId());
         var controle = controleService.creer(request.chantierId(), currentUser.keycloakId(),
-            request.dateControle(), request.remarques(), request.controleTiersId(), request.dateFin(), request.termine());
+            request.dateControle(), request.remarques(), controleTiersId, request.dateFin(), request.termine());
         return ResponseEntity.status(HttpStatus.CREATED).body(ControleResponse.from(controle));
     }
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public List<ControleResponse> lister(@RequestParam UUID chantierId) {
-        return controleService.listerParChantier(chantierId).stream().map(ControleResponse::from).toList();
+        var controles = controleService.listerParChantier(chantierId);
+        // Un compte Contrôleur ne voit que les contrôles de SON organisme sur ce chantier.
+        if (currentUser.controleTiersId().isPresent()) {
+            UUID scope = currentUser.controleTiersId().get();
+            controles = controles.stream().filter(c -> scope.equals(c.getControleTiersId())).toList();
+        }
+        return controles.stream().map(ControleResponse::from).toList();
     }
 
     @DeleteMapping("/{id}")

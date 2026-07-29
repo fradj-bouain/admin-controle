@@ -2,7 +2,6 @@ package com.fluttiris.admincontrol.messagerie.api.dto;
 
 import com.fluttiris.admincontrol.messagerie.domain.CibleGroupe;
 import com.fluttiris.admincontrol.messagerie.domain.DestinataireType;
-import com.fluttiris.admincontrol.messagerie.domain.EvenementDeclencheur;
 import com.fluttiris.admincontrol.messagerie.domain.RegleAutomatisation;
 
 import java.util.UUID;
@@ -10,7 +9,7 @@ import java.util.UUID;
 public record RegleAutomatisationResponse(
     UUID id,
     String nom,
-    EvenementDeclencheur evenementDeclencheur,
+    String champSurveillableId,
     int nbJoursAvant,
     boolean actif,
     CibleGroupe cibleGroupe,
@@ -20,7 +19,7 @@ public record RegleAutomatisationResponse(
     String contenu
 ) {
     public static RegleAutomatisationResponse from(RegleAutomatisation r) {
-        return new RegleAutomatisationResponse(r.getId(), r.getNom(), r.getEvenementDeclencheur(), r.getNbJoursAvant(),
+        return new RegleAutomatisationResponse(r.getId(), r.getNom(), r.getChampSurveillableId(), r.getNbJoursAvant(),
             r.isActif(), r.getCibleGroupe(), r.getDestinataireType(), r.getDestinataireId(), r.getSujet(), r.getContenu());
     }
 }

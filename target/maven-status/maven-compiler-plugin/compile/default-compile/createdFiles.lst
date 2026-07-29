@@ -11,13 +11,15 @@ com\fluttiris\admincontrol\configuration\domain\CorpsDeMetier.class
 com\fluttiris\admincontrol\common\security\CurrentUser.class
 com\fluttiris\admincontrol\messagerie\api\dto\CreateRegleAutomatisationRequest.class
 com\fluttiris\admincontrol\messagerie\api\dto\MessageResponse.class
+com\fluttiris\admincontrol\auth\TestAccountsSeeder.class
 com\fluttiris\admincontrol\messagerie\domain\Message.class
-com\fluttiris\admincontrol\messagerie\domain\EvenementDeclencheur.class
+com\fluttiris\admincontrol\messagerie\domain\ChampSurveillable.class
 com\fluttiris\admincontrol\configuration\api\dto\PaysResponse.class
 com\fluttiris\admincontrol\messagerie\application\PlanificationService.class
 com\fluttiris\admincontrol\chantier\api\ChantierUtilisateurController.class
 com\fluttiris\admincontrol\auth\api\UtilisateurController.class
 com\fluttiris\admincontrol\salarie\api\SalarieController.class
+com\fluttiris\admincontrol\messagerie\api\ChampSurveillableController.class
 com\fluttiris\admincontrol\messagerie\domain\RegleAutomatisation.class
 com\fluttiris\admincontrol\messagerie\application\MessageService.class
 com\fluttiris\admincontrol\client\api\ClientController.class
@@ -38,6 +40,7 @@ com\fluttiris\admincontrol\salarie\domain\Salarie.class
 com\fluttiris\admincontrol\auth\api\dto\UtilisateurResponse.class
 com\fluttiris\admincontrol\config\SecurityConfig.class
 com\fluttiris\admincontrol\configuration\domain\PaysRepository.class
+com\fluttiris\admincontrol\common\security\ScopeAuthorizationService.class
 com\fluttiris\admincontrol\configuration\api\dto\CreatePaysRequest.class
 com\fluttiris\admincontrol\auth\application\UtilisateurService.class
 com\fluttiris\admincontrol\chantier\domain\ChantierUtilisateurRepository.class
@@ -81,7 +84,9 @@ com\fluttiris\admincontrol\chantier\api\dto\CreateChantierRequest.class
 com\fluttiris\admincontrol\entreprise\domain\AffectationEntrepriseChantierRepository.class
 com\fluttiris\admincontrol\entreprise\application\EntrepriseService.class
 com\fluttiris\admincontrol\messagerie\api\dto\PlanifierMessageRequest.class
+com\fluttiris\admincontrol\messagerie\application\champs\DocumentExpirationChamp.class
 com\fluttiris\admincontrol\qrcode\api\dto\VerifierQrCodeRequest.class
+com\fluttiris\admincontrol\messagerie\application\champs\ChantierControleAVenirChamp.class
 com\fluttiris\admincontrol\configuration\api\ReferenceDataController.class
 com\fluttiris\admincontrol\controle\domain\RapportControleRepository.class
 com\fluttiris\admincontrol\salarie\api\AffectationSalarieChantierController.class
@@ -153,6 +158,9 @@ com\fluttiris\admincontrol\document\domain\StatutValidation.class
 com\fluttiris\admincontrol\entreprise\api\AffectationEntrepriseChantierController.class
 com\fluttiris\admincontrol\qrcode\domain\QrCodeRepository.class
 com\fluttiris\admincontrol\client\domain\Client.class
+com\fluttiris\admincontrol\messagerie\api\dto\ChampSurveillableResponse.class
+com\fluttiris\admincontrol\messagerie\domain\EvenementDetecte.class
+com\fluttiris\admincontrol\messagerie\application\ChampSurveillableRegistry.class
 com\fluttiris\admincontrol\client\domain\ClientRepository.class
 com\fluttiris\admincontrol\configuration\api\dto\CreateTypeSalarieRequest.class
 com\fluttiris\admincontrol\messagerie\api\dto\SendMessageRequest.class

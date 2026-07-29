@@ -28,9 +28,14 @@ public class RegleAutomatisation extends Auditable {
     @Column(nullable = false)
     private String nom;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "evenement_declencheur", nullable = false)
-    private EvenementDeclencheur evenementDeclencheur;
+    /**
+     * Id d'un ChampSurveillable enregistré (voir ChampSurveillableRegistry) —
+     * pas un enum figé : l'existence de la valeur est vérifiée par
+     * RegleAutomatisationService au moment de la création/modification, contre
+     * la liste vivante des champs surveillables disponibles.
+     */
+    @Column(name = "champ_surveillable_id", nullable = false)
+    private String champSurveillableId;
 
     @Column(name = "nb_jours_avant", nullable = false)
     private int nbJoursAvant;
@@ -55,13 +60,13 @@ public class RegleAutomatisation extends Auditable {
     @Column(nullable = false)
     private String contenu;
 
-    public static RegleAutomatisation creer(String nom, EvenementDeclencheur evenementDeclencheur, int nbJoursAvant,
+    public static RegleAutomatisation creer(String nom, String champSurveillableId, int nbJoursAvant,
                                              CibleGroupe cibleGroupe, DestinataireType destinataireType,
                                              UUID destinataireId, String sujet, String contenu) {
         valider(cibleGroupe, destinataireType, destinataireId);
         RegleAutomatisation regle = new RegleAutomatisation();
         regle.nom = nom;
-        regle.evenementDeclencheur = evenementDeclencheur;
+        regle.champSurveillableId = champSurveillableId;
         regle.nbJoursAvant = nbJoursAvant;
         regle.cibleGroupe = cibleGroupe;
         regle.destinataireType = destinataireType;
@@ -71,12 +76,12 @@ public class RegleAutomatisation extends Auditable {
         return regle;
     }
 
-    public void modifier(String nom, EvenementDeclencheur evenementDeclencheur, int nbJoursAvant,
+    public void modifier(String nom, String champSurveillableId, int nbJoursAvant,
                           CibleGroupe cibleGroupe, DestinataireType destinataireType, UUID destinataireId,
                           String sujet, String contenu) {
         valider(cibleGroupe, destinataireType, destinataireId);
         this.nom = nom;
-        this.evenementDeclencheur = evenementDeclencheur;
+        this.champSurveillableId = champSurveillableId;
         this.nbJoursAvant = nbJoursAvant;
         this.cibleGroupe = cibleGroupe;
         this.destinataireType = destinataireType;

@@ -20,6 +20,9 @@ import java.util.UUID;
  * Table pivot Entreprise <-> Chantier. Porte le rôle de l'entreprise
  * ET son rattachement hiérarchique, tous deux propres à CE chantier :
  * une entreprise Principale sur le chantier A peut être STT1 sur le chantier B.
+ * Une même entreprise peut aussi avoir plusieurs affectations SUR LE MÊME chantier
+ * (ex : Principale ET STT1), à condition que ce ne soit jamais deux fois le même rôle
+ * (unicité vérifiée sur le triplet chantier/entreprise/rôle, pas juste chantier/entreprise).
  *
  * affectationParenteId référence une autre ligne de cette même table (pas
  * directement une Entreprise) : le lien "qui a invité qui" n'a de sens que

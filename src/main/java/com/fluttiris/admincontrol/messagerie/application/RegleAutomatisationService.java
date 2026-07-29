@@ -1,9 +1,9 @@
 package com.fluttiris.admincontrol.messagerie.application;
 
+import com.fluttiris.admincontrol.common.exception.BusinessRuleViolationException;
 import com.fluttiris.admincontrol.common.exception.EntityNotFoundException;
 import com.fluttiris.admincontrol.messagerie.domain.CibleGroupe;
 import com.fluttiris.admincontrol.messagerie.domain.DestinataireType;
-import com.fluttiris.admincontrol.messagerie.domain.EvenementDeclencheur;
 import com.fluttiris.admincontrol.messagerie.domain.RegleAutomatisation;
 import com.fluttiris.admincontrol.messagerie.domain.RegleAutomatisationRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,20 +19,23 @@ import java.util.UUID;
 public class RegleAutomatisationService {
 
     private final RegleAutomatisationRepository regleAutomatisationRepository;
+    private final ChampSurveillableRegistry champSurveillableRegistry;
 
-    public RegleAutomatisation creer(String nom, EvenementDeclencheur evenementDeclencheur, int nbJoursAvant,
+    public RegleAutomatisation creer(String nom, String champSurveillableId, int nbJoursAvant,
                                       CibleGroupe cibleGroupe, DestinataireType destinataireType,
                                       UUID destinataireId, String sujet, String contenu) {
-        RegleAutomatisation regle = RegleAutomatisation.creer(nom, evenementDeclencheur, nbJoursAvant, cibleGroupe,
+        verifierChampSurveillable(champSurveillableId);
+        RegleAutomatisation regle = RegleAutomatisation.creer(nom, champSurveillableId, nbJoursAvant, cibleGroupe,
             destinataireType, destinataireId, sujet, contenu);
         return regleAutomatisationRepository.save(regle);
     }
 
-    public RegleAutomatisation modifier(UUID id, String nom, EvenementDeclencheur evenementDeclencheur,
+    public RegleAutomatisation modifier(UUID id, String nom, String champSurveillableId,
                                          int nbJoursAvant, CibleGroupe cibleGroupe, DestinataireType destinataireType,
                                          UUID destinataireId, String sujet, String contenu) {
+        verifierChampSurveillable(champSurveillableId);
         RegleAutomatisation regle = obtenir(id);
-        regle.modifier(nom, evenementDeclencheur, nbJoursAvant, cibleGroupe, destinataireType, destinataireId, sujet, contenu);
+        regle.modifier(nom, champSurveillableId, nbJoursAvant, cibleGroupe, destinataireType, destinataireId, sujet, contenu);
         return regle;
     }
 
@@ -61,5 +64,11 @@ public class RegleAutomatisationService {
 
     public void supprimer(UUID id) {
         obtenir(id).supprimer();
+    }
+
+    private void verifierChampSurveillable(String champSurveillableId) {
+        if (champSurveillableRegistry.parId(champSurveillableId).isEmpty()) {
+            throw new BusinessRuleViolationException("Champ surveillable inconnu : " + champSurveillableId);
+        }
     }
 }

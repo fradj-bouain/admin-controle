@@ -25,9 +25,9 @@ public class AffectationEntrepriseChantierService {
      */
     public AffectationEntrepriseChantier affecter(UUID chantierId, UUID entrepriseId, RoleEntreprise role,
                                                     UUID affectationParenteId) {
-        affectationRepository.findByChantierIdAndEntrepriseId(chantierId, entrepriseId)
+        affectationRepository.findByChantierIdAndEntrepriseIdAndRole(chantierId, entrepriseId, role)
             .ifPresent(existing -> {
-                throw new BusinessRuleViolationException("Cette entreprise est déjà affectée à ce chantier");
+                throw new BusinessRuleViolationException("Cette entreprise est déjà affectée à ce chantier avec ce rôle");
             });
 
         AffectationEntrepriseChantier parente = null;

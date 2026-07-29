@@ -9,9 +9,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Accès aux informations de l'utilisateur authentifié (porté par le JWT Keycloak).
- * "entreprise_id" est un claim personnalisé à configurer côté Keycloak (mapper de protocole)
- * pour les comptes de type entreprise ; absent pour les comptes internes (admin, client).
+ * Accès aux informations de l'utilisateur authentifié, porté par le JWT auto-hébergé
+ * (voir AuthenticationService/JwtConfig — pas de fournisseur d'identité externe).
+ * "entreprise_id" / "client_id" / "controle_tiers_id" sont mutuellement exclusifs :
+ * chacun n'est présent que pour le type de compte correspondant (Entreprise, Client,
+ * Contrôleur) ; absents pour un compte interne (SUPER_ADMIN, ADMIN).
  */
 @Component
 public class CurrentUser {
@@ -27,6 +29,11 @@ public class CurrentUser {
 
     public Optional<UUID> clientId() {
         String claim = currentJwt().getClaimAsString("client_id");
+        return Optional.ofNullable(claim).map(UUID::fromString);
+    }
+
+    public Optional<UUID> controleTiersId() {
+        String claim = currentJwt().getClaimAsString("controle_tiers_id");
         return Optional.ofNullable(claim).map(UUID::fromString);
     }
 

@@ -23,7 +23,8 @@ public class UtilisateurController {
     @PostMapping
     public ResponseEntity<UtilisateurResponse> creer(@Valid @RequestBody CreateUtilisateurRequest request) {
         var utilisateur = utilisateurService.creer(request.username(), request.password(), request.civilite(),
-            request.nom(), request.prenom(), request.email(), request.roles(), request.entrepriseId(), request.clientId());
+            request.nom(), request.prenom(), request.email(), request.roles(), request.entrepriseId(), request.clientId(),
+            request.controleTiersId());
         return ResponseEntity.status(HttpStatus.CREATED).body(UtilisateurResponse.from(utilisateur));
     }
 

@@ -3,6 +3,8 @@ package com.fluttiris.admincontrol.document.api;
 import com.fluttiris.admincontrol.document.api.dto.CreateDocumentRequest;
 import com.fluttiris.admincontrol.document.api.dto.DocumentResponse;
 import com.fluttiris.admincontrol.document.application.DocumentService;
+import com.fluttiris.admincontrol.common.security.CurrentUser;
+import com.fluttiris.admincontrol.common.security.ScopeAuthorizationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,8 @@ import java.util.UUID;
 public class DocumentController {
 
     private final DocumentService documentService;
+    private final CurrentUser currentUser;
+    private final ScopeAuthorizationService scopeAuthz;
 
     @PostMapping
     @PreAuthorize("isAuthenticated()")
@@ -33,11 +37,18 @@ public class DocumentController {
     @PreAuthorize("isAuthenticated()")
     public List<DocumentResponse> lister(@RequestParam(required = false) UUID salarieId,
                                           @RequestParam(required = false) UUID entrepriseId) {
+        // Un compte Entreprise ne peut consulter que ses propres documents ou ceux
+        // de ses propres salariés — jamais ceux d'une autre entreprise.
+        boolean estEntrepriseScope = currentUser.entrepriseId().isPresent();
         if (salarieId != null) {
+            if (estEntrepriseScope && !scopeAuthz.salarieAppartientAEntreprise(salarieId, currentUser.entrepriseId().get())) {
+                return List.of();
+            }
             return documentService.listerParSalarie(salarieId).stream().map(DocumentResponse::from).toList();
         }
-        if (entrepriseId != null) {
-            return documentService.listerParEntreprise(entrepriseId).stream().map(DocumentResponse::from).toList();
+        UUID scope = estEntrepriseScope ? currentUser.entrepriseId().get() : entrepriseId;
+        if (scope != null) {
+            return documentService.listerParEntreprise(scope).stream().map(DocumentResponse::from).toList();
         }
         return List.of();
     }

@@ -51,6 +51,9 @@ public class AuthenticationService {
         if (utilisateur.getClientId() != null) {
             claims.claim("client_id", utilisateur.getClientId().toString());
         }
+        if (utilisateur.getControleTiersId() != null) {
+            claims.claim("controle_tiers_id", utilisateur.getControleTiersId().toString());
+        }
 
         String token = jwtEncoder.encode(JwtEncoderParameters.from(JwsHeader.with(SignatureAlgorithm.RS256).build(), claims.build()))
             .getTokenValue();

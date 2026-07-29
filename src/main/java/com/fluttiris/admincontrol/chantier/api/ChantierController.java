@@ -52,19 +52,21 @@ public class ChantierController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or @currentUser.clientId().isEmpty() "
+        + "or @scopeAuthz.chantierAppartientAuClient(#id, @currentUser.clientId().get())")
     public ChantierResponse obtenir(@PathVariable UUID id) {
-        // Le scope par rôle Client (lecture seule sur SES chantiers) est appliqué
-        // au niveau service dans une prochaine itération, une fois le module
-        // Client relié à l'utilisateur Keycloak (client_id claim, cf. CurrentUser).
         return ChantierResponse.from(chantierService.obtenir(id));
     }
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public List<ChantierResponse> lister(@RequestParam(required = false) UUID clientId) {
-        List<Chantier> chantiers = clientId != null
-            ? chantierService.listerParClient(clientId)
+        // Un compte Client est toujours ramené à SON propre périmètre, même s'il
+        // passe un autre clientId en paramètre (cf. CurrentUser : le claim n'existe
+        // que pour ce type de compte, jamais pour un compte interne).
+        UUID scope = currentUser.clientId().orElse(clientId);
+        List<Chantier> chantiers = scope != null
+            ? chantierService.listerParClient(scope)
             : chantierService.lister();
         return chantiers.stream().map(ChantierResponse::from).toList();
     }

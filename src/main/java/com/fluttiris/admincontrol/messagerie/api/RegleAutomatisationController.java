@@ -23,7 +23,7 @@ public class RegleAutomatisationController {
     @PostMapping
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<RegleAutomatisationResponse> creer(@Valid @RequestBody CreateRegleAutomatisationRequest request) {
-        var regle = regleAutomatisationService.creer(request.nom(), request.evenementDeclencheur(), request.nbJoursAvant(),
+        var regle = regleAutomatisationService.creer(request.nom(), request.champSurveillableId(), request.nbJoursAvant(),
             request.cibleGroupe(), request.destinataireType(), request.destinataireId(), request.sujet(), request.contenu());
         return ResponseEntity.status(HttpStatus.CREATED).body(RegleAutomatisationResponse.from(regle));
     }
@@ -43,7 +43,7 @@ public class RegleAutomatisationController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public RegleAutomatisationResponse modifier(@PathVariable UUID id, @Valid @RequestBody CreateRegleAutomatisationRequest request) {
-        var regle = regleAutomatisationService.modifier(id, request.nom(), request.evenementDeclencheur(),
+        var regle = regleAutomatisationService.modifier(id, request.nom(), request.champSurveillableId(),
             request.nbJoursAvant(), request.cibleGroupe(), request.destinataireType(), request.destinataireId(),
             request.sujet(), request.contenu());
         return RegleAutomatisationResponse.from(regle);

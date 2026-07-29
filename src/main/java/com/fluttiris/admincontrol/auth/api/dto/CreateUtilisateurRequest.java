@@ -15,6 +15,7 @@ public record CreateUtilisateurRequest(
     @NotBlank String email,
     @NotEmpty Set<String> roles,
     UUID entrepriseId,
-    UUID clientId
+    UUID clientId,
+    UUID controleTiersId
 ) {
 }

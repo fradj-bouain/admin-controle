@@ -1,18 +1,13 @@
 package com.fluttiris.admincontrol.messagerie.application;
 
-import com.fluttiris.admincontrol.chantier.domain.Chantier;
-import com.fluttiris.admincontrol.chantier.domain.ChantierRepository;
-import com.fluttiris.admincontrol.client.domain.Client;
-import com.fluttiris.admincontrol.client.domain.ClientRepository;
-import com.fluttiris.admincontrol.document.domain.Document;
-import com.fluttiris.admincontrol.document.domain.DocumentRepository;
-import com.fluttiris.admincontrol.document.domain.TypeDocument;
-import com.fluttiris.admincontrol.document.domain.TypeDocumentRepository;
-import com.fluttiris.admincontrol.entreprise.domain.Entreprise;
-import com.fluttiris.admincontrol.entreprise.domain.EntrepriseRepository;
 import com.fluttiris.admincontrol.auth.domain.Utilisateur;
 import com.fluttiris.admincontrol.auth.domain.UtilisateurRepository;
+import com.fluttiris.admincontrol.client.domain.Client;
+import com.fluttiris.admincontrol.client.domain.ClientRepository;
+import com.fluttiris.admincontrol.entreprise.domain.Entreprise;
+import com.fluttiris.admincontrol.entreprise.domain.EntrepriseRepository;
 import com.fluttiris.admincontrol.messagerie.domain.DestinataireType;
+import com.fluttiris.admincontrol.messagerie.domain.EvenementDetecte;
 import com.fluttiris.admincontrol.messagerie.domain.MessagePlanifie;
 import com.fluttiris.admincontrol.messagerie.domain.MessagePlanifieRepository;
 import com.fluttiris.admincontrol.messagerie.domain.RegleAutomatisation;
@@ -25,26 +20,23 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
  * Moteur d'automatisation de la messagerie : génère des messages planifiés à
- * partir des règles actives (relance N jours avant un événement métier), puis
- * envoie tout message planifié (manuel ou généré) arrivé à échéance.
+ * partir des règles actives (relance N jours avant l'échéance détectée par le
+ * ChampSurveillable de la règle), puis envoie tout message planifié (manuel
+ * ou généré) arrivé à échéance.
  */
 @Service
 @RequiredArgsConstructor
 public class AutomatisationSchedulerService {
 
-    private static final DateTimeFormatter FORMAT_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
     private final RegleAutomatisationRepository regleAutomatisationRepository;
     private final MessagePlanifieRepository messagePlanifieRepository;
-    private final DocumentRepository documentRepository;
-    private final TypeDocumentRepository typeDocumentRepository;
-    private final ChantierRepository chantierRepository;
+    private final ChampSurveillableRegistry champSurveillableRegistry;
     private final UtilisateurRepository utilisateurRepository;
     private final ClientRepository clientRepository;
     private final EntrepriseRepository entrepriseRepository;
@@ -54,10 +46,8 @@ public class AutomatisationSchedulerService {
     @Transactional
     public void genererMessagesDepuisRegles() {
         for (RegleAutomatisation regle : regleAutomatisationRepository.findByActifTrue()) {
-            switch (regle.getEvenementDeclencheur()) {
-                case DOCUMENT_EXPIRATION -> genererPourDocuments(regle);
-                case CHANTIER_CONTROLE_A_VENIR -> genererPourChantiers(regle);
-            }
+            champSurveillableRegistry.parId(regle.getChampSurveillableId())
+                .ifPresent(champ -> genererDepuisRegle(regle, champ.rechercher(LocalDate.now().plusDays(regle.getNbJoursAvant()))));
         }
     }
 
@@ -75,44 +65,22 @@ public class AutomatisationSchedulerService {
         }
     }
 
-    private void genererPourDocuments(RegleAutomatisation regle) {
-        LocalDate dateCible = LocalDate.now().plusDays(regle.getNbJoursAvant());
-        for (Document document : documentRepository.findByDateExpiration(dateCible)) {
-            if (messagePlanifieRepository.existsByRegleIdAndSourceEntityId(regle.getId(), document.getId())) {
+    private void genererDepuisRegle(RegleAutomatisation regle, List<EvenementDetecte> evenements) {
+        for (EvenementDetecte evenement : evenements) {
+            if (messagePlanifieRepository.existsByRegleIdAndSourceEntityId(regle.getId(), evenement.sourceEntityId())) {
                 continue;
             }
-            String libelle = typeDocumentRepository.findById(document.getTypeDocumentId())
-                .map(TypeDocument::getLibelle).orElse("");
-            String sujet = substituer(regle.getSujet(), document.getDateExpiration(), null, libelle);
-            String contenu = substituer(regle.getContenu(), document.getDateExpiration(), null, libelle);
-            messagePlanifieRepository.save(MessagePlanifie.genererDepuisRegle(regle, document.getId(),
-                document.getChantierId(), sujet, contenu, Instant.now()));
+            String sujet = substituer(regle.getSujet(), evenement.placeholders());
+            String contenu = substituer(regle.getContenu(), evenement.placeholders());
+            messagePlanifieRepository.save(MessagePlanifie.genererDepuisRegle(regle, evenement.sourceEntityId(),
+                evenement.chantierId(), sujet, contenu, Instant.now()));
         }
     }
 
-    private void genererPourChantiers(RegleAutomatisation regle) {
-        LocalDate dateCible = LocalDate.now().plusDays(regle.getNbJoursAvant());
-        for (Chantier chantier : chantierRepository.findByDateProchainControle(dateCible)) {
-            if (messagePlanifieRepository.existsByRegleIdAndSourceEntityId(regle.getId(), chantier.getId())) {
-                continue;
-            }
-            String sujet = substituer(regle.getSujet(), chantier.getDateProchainControle(), chantier.getNom(), null);
-            String contenu = substituer(regle.getContenu(), chantier.getDateProchainControle(), chantier.getNom(), null);
-            messagePlanifieRepository.save(MessagePlanifie.genererDepuisRegle(regle, chantier.getId(),
-                chantier.getId(), sujet, contenu, Instant.now()));
-        }
-    }
-
-    private String substituer(String texte, LocalDate date, String chantierNom, String documentLibelle) {
+    private String substituer(String texte, Map<String, String> placeholders) {
         String resultat = texte;
-        if (date != null) {
-            resultat = resultat.replace("[DATE]", date.format(FORMAT_DATE));
-        }
-        if (chantierNom != null) {
-            resultat = resultat.replace("[CHANTIER_NOM]", chantierNom);
-        }
-        if (documentLibelle != null) {
-            resultat = resultat.replace("[DOCUMENT_LIBELLE]", documentLibelle);
+        for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+            resultat = resultat.replace("[" + entry.getKey() + "]", entry.getValue());
         }
         return resultat;
     }

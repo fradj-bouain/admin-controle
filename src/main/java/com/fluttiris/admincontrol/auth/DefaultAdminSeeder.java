@@ -41,6 +41,7 @@ public class DefaultAdminSeeder implements ApplicationRunner {
             "admin@admincontrol.local",
             Set.of("SUPER_ADMIN"),
             null,
+            null,
             null
         );
         utilisateurRepository.save(admin);

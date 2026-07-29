@@ -3,6 +3,7 @@ package com.fluttiris.admincontrol.client.api;
 import com.fluttiris.admincontrol.client.api.dto.ClientResponse;
 import com.fluttiris.admincontrol.client.api.dto.CreateClientRequest;
 import com.fluttiris.admincontrol.client.application.ClientService;
+import com.fluttiris.admincontrol.common.security.CurrentUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,7 @@ import java.util.UUID;
 public class ClientController {
 
     private final ClientService clientService;
+    private final CurrentUser currentUser;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
@@ -43,7 +45,8 @@ public class ClientController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or "
+        + "@currentUser.clientId().isEmpty() or @currentUser.clientId().get().equals(#id)")
     public ClientResponse obtenir(@PathVariable UUID id) {
         return ClientResponse.from(clientService.obtenir(id));
     }
@@ -51,6 +54,11 @@ public class ClientController {
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public List<ClientResponse> lister() {
+        // Un compte Client est un tenant : il ne voit jamais le registre complet,
+        // seulement sa propre fiche.
+        if (currentUser.clientId().isPresent()) {
+            return List.of(ClientResponse.from(clientService.obtenir(currentUser.clientId().get())));
+        }
         return clientService.lister().stream().map(ClientResponse::from).toList();
     }
 

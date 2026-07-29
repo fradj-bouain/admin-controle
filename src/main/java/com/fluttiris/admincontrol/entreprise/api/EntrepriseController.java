@@ -5,6 +5,7 @@ import com.fluttiris.admincontrol.entreprise.api.dto.CreateEntrepriseRequest;
 import com.fluttiris.admincontrol.entreprise.api.dto.EntrepriseResponse;
 import com.fluttiris.admincontrol.entreprise.application.AffectationEntrepriseChantierService;
 import com.fluttiris.admincontrol.entreprise.application.EntrepriseService;
+import com.fluttiris.admincontrol.common.security.CurrentUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,7 @@ public class EntrepriseController {
 
     private final EntrepriseService entrepriseService;
     private final AffectationEntrepriseChantierService affectationEntrepriseChantierService;
+    private final CurrentUser currentUser;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
@@ -36,13 +38,15 @@ public class EntrepriseController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or "
+        + "@currentUser.entrepriseId().isEmpty() or @currentUser.entrepriseId().get().equals(#id)")
     public EntrepriseResponse obtenir(@PathVariable UUID id) {
         return EntrepriseResponse.from(entrepriseService.obtenir(id));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or "
+        + "(@currentUser.entrepriseId().isPresent() and @currentUser.entrepriseId().get().equals(#id))")
     public EntrepriseResponse modifier(@PathVariable UUID id, @Valid @RequestBody CreateEntrepriseRequest request) {
         var entreprise = entrepriseService.modifier(id, request.raisonSociale(), request.siret(), request.adresse(),
             request.adresse2(), request.adresse3(), request.codePostal(), request.ville(), request.paysId(),
@@ -56,6 +60,11 @@ public class EntrepriseController {
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public List<EntrepriseResponse> lister() {
+        // Un compte Entreprise est un tenant : il ne voit jamais le registre complet,
+        // seulement sa propre fiche.
+        if (currentUser.entrepriseId().isPresent()) {
+            return List.of(EntrepriseResponse.from(entrepriseService.obtenir(currentUser.entrepriseId().get())));
+        }
         return entrepriseService.lister().stream().map(EntrepriseResponse::from).toList();
     }
 
@@ -79,7 +88,8 @@ public class EntrepriseController {
     }
 
     @GetMapping("/{id}/chantiers")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or "
+        + "@currentUser.entrepriseId().isEmpty() or @currentUser.entrepriseId().get().equals(#id)")
     public List<AffectationEntrepriseChantierResponse> listerChantiers(@PathVariable UUID id) {
         return affectationEntrepriseChantierService.listerParEntreprise(id).stream()
             .map(AffectationEntrepriseChantierResponse::from)
