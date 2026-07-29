@@ -1,0 +1,85 @@
+package com.fluttiris.admincontrol.document.domain;
+
+import com.fluttiris.admincontrol.common.audit.Auditable;
+import com.fluttiris.admincontrol.common.exception.BusinessRuleViolationException;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
+
+import java.time.LocalDate;
+import java.util.UUID;
+
+@Entity
+@Table(name = "document")
+@SQLRestriction("deleted_at IS NULL")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Document extends Auditable {
+
+    @Id
+    private UUID id = UUID.randomUUID();
+
+    @Column(name = "type_document_id", nullable = false)
+    private UUID typeDocumentId;
+
+    @Column(name = "salarie_id")
+    private UUID salarieId;
+
+    @Column(name = "entreprise_id")
+    private UUID entrepriseId;
+
+    @Column(name = "chantier_id")
+    private UUID chantierId;
+
+    @Column(name = "fichier_url")
+    private String fichierUrl;
+
+    @Column(name = "date_debut_validite")
+    private LocalDate dateDebutValidite;
+
+    @Column(name = "date_expiration")
+    private LocalDate dateExpiration;
+
+    @Column(name = "date_relance")
+    private LocalDate dateRelance;
+
+    private String mentions;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "statut_validation", nullable = false)
+    private StatutValidation statutValidation = StatutValidation.EN_ATTENTE;
+
+    public static Document creer(UUID typeDocumentId, UUID salarieId, UUID entrepriseId, UUID chantierId,
+                                  String fichierUrl, LocalDate dateDebutValidite, LocalDate dateExpiration,
+                                  LocalDate dateRelance, String mentions) {
+        if ((salarieId == null) == (entrepriseId == null)) {
+            throw new BusinessRuleViolationException("Un document doit cibler exactement un salarié OU une entreprise");
+        }
+        Document document = new Document();
+        document.typeDocumentId = typeDocumentId;
+        document.salarieId = salarieId;
+        document.entrepriseId = entrepriseId;
+        document.chantierId = chantierId;
+        document.fichierUrl = fichierUrl;
+        document.dateDebutValidite = dateDebutValidite;
+        document.dateExpiration = dateExpiration;
+        document.dateRelance = dateRelance;
+        document.mentions = mentions;
+        return document;
+    }
+
+    public void valider() {
+        this.statutValidation = StatutValidation.VALIDE;
+    }
+
+    public void refuser() {
+        this.statutValidation = StatutValidation.REFUSE;
+    }
+}
