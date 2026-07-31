@@ -56,6 +56,10 @@ public class Document extends Auditable {
     @Column(name = "statut_validation", nullable = false)
     private StatutValidation statutValidation = StatutValidation.EN_ATTENTE;
 
+    /** Motif choisi lors d'un refus (voir DocumentEtat) — null tant que le document n'a jamais été refusé. */
+    @Column(name = "document_etat_id")
+    private UUID documentEtatId;
+
     public static Document creer(UUID typeDocumentId, UUID salarieId, UUID entrepriseId, UUID chantierId,
                                   String fichierUrl, LocalDate dateDebutValidite, LocalDate dateExpiration,
                                   LocalDate dateRelance, String mentions) {
@@ -77,9 +81,11 @@ public class Document extends Auditable {
 
     public void valider() {
         this.statutValidation = StatutValidation.VALIDE;
+        this.documentEtatId = null;
     }
 
-    public void refuser() {
+    public void refuser(UUID documentEtatId) {
         this.statutValidation = StatutValidation.REFUSE;
+        this.documentEtatId = documentEtatId;
     }
 }

@@ -27,4 +27,8 @@ public class CorpsDeMetier {
         corpsDeMetier.libelle = libelle;
         return corpsDeMetier;
     }
+
+    public void modifier(String libelle) {
+        this.libelle = libelle;
+    }
 }

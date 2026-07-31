@@ -17,11 +17,12 @@ public record DocumentResponse(
     LocalDate dateExpiration,
     LocalDate dateRelance,
     String mentions,
-    StatutValidation statutValidation
+    StatutValidation statutValidation,
+    UUID documentEtatId
 ) {
     public static DocumentResponse from(Document d) {
         return new DocumentResponse(d.getId(), d.getTypeDocumentId(), d.getSalarieId(), d.getEntrepriseId(),
             d.getChantierId(), d.getFichierUrl(), d.getDateDebutValidite(), d.getDateExpiration(),
-            d.getDateRelance(), d.getMentions(), d.getStatutValidation());
+            d.getDateRelance(), d.getMentions(), d.getStatutValidation(), d.getDocumentEtatId());
     }
 }

@@ -34,6 +34,16 @@ public class TypeDocumentService {
             .orElseThrow(() -> new EntityNotFoundException("Type de document", id));
     }
 
+    public TypeDocument modifier(UUID id, String libelle, CibleDocument cible, boolean obligatoire, FormatDocument format,
+                                  UUID corpsDeMetierId, UUID paysId, boolean dateDebutValiditeRequise,
+                                  boolean dateFinValiditeRequise, int nbJoursRelanceAvant, int nbJoursRecurrence,
+                                  boolean retireAccordAcces) {
+        TypeDocument type = obtenir(id);
+        type.modifier(libelle, cible, obligatoire, format, corpsDeMetierId, paysId, dateDebutValiditeRequise,
+            dateFinValiditeRequise, nbJoursRelanceAvant, nbJoursRecurrence, retireAccordAcces);
+        return type;
+    }
+
     @Transactional(readOnly = true)
     public List<TypeDocument> lister() {
         return typeDocumentRepository.findAll();

@@ -42,9 +42,9 @@ public class DocumentService {
         return document;
     }
 
-    public Document refuser(UUID id) {
+    public Document refuser(UUID id, UUID documentEtatId) {
         Document document = obtenir(id);
-        document.refuser();
+        document.refuser(documentEtatId);
         return document;
     }
 

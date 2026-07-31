@@ -41,4 +41,14 @@ public class TypeDocumentController {
     public TypeDocumentResponse obtenir(@PathVariable UUID id) {
         return TypeDocumentResponse.from(typeDocumentService.obtenir(id));
     }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public TypeDocumentResponse modifier(@PathVariable UUID id, @Valid @RequestBody CreateTypeDocumentRequest request) {
+        var type = typeDocumentService.modifier(id, request.libelle(), request.cible(), request.obligatoire(),
+            request.format(), request.corpsDeMetierId(), request.paysId(), request.dateDebutValiditeRequise(),
+            request.dateFinValiditeRequise(), request.nbJoursRelanceAvant(), request.nbJoursRecurrence(),
+            request.retireAccordAcces());
+        return TypeDocumentResponse.from(type);
+    }
 }

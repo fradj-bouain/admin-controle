@@ -2,6 +2,7 @@ package com.fluttiris.admincontrol.document.api;
 
 import com.fluttiris.admincontrol.document.api.dto.CreateDocumentRequest;
 import com.fluttiris.admincontrol.document.api.dto.DocumentResponse;
+import com.fluttiris.admincontrol.document.api.dto.RefuserDocumentRequest;
 import com.fluttiris.admincontrol.document.application.DocumentService;
 import com.fluttiris.admincontrol.common.security.CurrentUser;
 import com.fluttiris.admincontrol.common.security.ScopeAuthorizationService;
@@ -61,8 +62,9 @@ public class DocumentController {
 
     @PostMapping("/{id}/refuser")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-    public DocumentResponse refuser(@PathVariable UUID id) {
-        return DocumentResponse.from(documentService.refuser(id));
+    public DocumentResponse refuser(@PathVariable UUID id, @RequestBody(required = false) RefuserDocumentRequest request) {
+        UUID documentEtatId = request != null ? request.documentEtatId() : null;
+        return DocumentResponse.from(documentService.refuser(id, documentEtatId));
     }
 
     @DeleteMapping("/{id}")

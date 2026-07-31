@@ -41,4 +41,20 @@ public class UtilisateurService {
         return utilisateurRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Utilisateur", id));
     }
+
+    public Utilisateur desactiver(UUID id) {
+        Utilisateur utilisateur = obtenir(id);
+        utilisateur.desactiver();
+        return utilisateur;
+    }
+
+    public Utilisateur activer(UUID id) {
+        Utilisateur utilisateur = obtenir(id);
+        utilisateur.activer();
+        return utilisateur;
+    }
+
+    public void supprimer(UUID id) {
+        obtenir(id).supprimer();
+    }
 }

@@ -34,4 +34,10 @@ public class Pays {
         pays.zone = zone;
         return pays;
     }
+
+    public void modifier(String codeIso, String nom, String zone) {
+        this.codeIso = codeIso;
+        this.nom = nom;
+        this.zone = zone;
+    }
 }

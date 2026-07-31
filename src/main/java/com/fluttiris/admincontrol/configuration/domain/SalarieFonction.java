@@ -27,4 +27,8 @@ public class SalarieFonction {
         fonction.libelle = libelle;
         return fonction;
     }
+
+    public void modifier(String libelle) {
+        this.libelle = libelle;
+    }
 }

@@ -83,4 +83,21 @@ public class TypeDocument {
         type.retireAccordAcces = retireAccordAcces;
         return type;
     }
+
+    public void modifier(String libelle, CibleDocument cible, boolean obligatoire, FormatDocument format,
+                          UUID corpsDeMetierId, UUID paysId, boolean dateDebutValiditeRequise,
+                          boolean dateFinValiditeRequise, int nbJoursRelanceAvant,
+                          int nbJoursRecurrence, boolean retireAccordAcces) {
+        this.libelle = libelle;
+        this.cible = cible;
+        this.obligatoire = obligatoire;
+        this.format = format;
+        this.corpsDeMetierId = corpsDeMetierId;
+        this.paysId = paysId;
+        this.dateDebutValiditeRequise = dateDebutValiditeRequise;
+        this.dateFinValiditeRequise = dateFinValiditeRequise;
+        this.nbJoursRelanceAvant = nbJoursRelanceAvant;
+        this.nbJoursRecurrence = nbJoursRecurrence;
+        this.retireAccordAcces = retireAccordAcces;
+    }
 }

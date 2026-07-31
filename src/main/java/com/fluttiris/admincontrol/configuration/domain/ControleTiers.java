@@ -27,4 +27,8 @@ public class ControleTiers {
         controleTiers.nom = nom;
         return controleTiers;
     }
+
+    public void modifier(String nom) {
+        this.nom = nom;
+    }
 }

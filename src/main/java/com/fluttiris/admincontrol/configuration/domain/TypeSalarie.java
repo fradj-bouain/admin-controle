@@ -31,4 +31,9 @@ public class TypeSalarie {
         typeSalarie.libelle = libelle;
         return typeSalarie;
     }
+
+    public void modifier(String code, String libelle) {
+        this.code = code;
+        this.libelle = libelle;
+    }
 }

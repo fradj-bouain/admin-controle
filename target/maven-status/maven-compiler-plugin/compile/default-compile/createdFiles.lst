@@ -20,6 +20,7 @@ com\fluttiris\admincontrol\chantier\api\ChantierUtilisateurController.class
 com\fluttiris\admincontrol\auth\api\UtilisateurController.class
 com\fluttiris\admincontrol\salarie\api\SalarieController.class
 com\fluttiris\admincontrol\messagerie\api\ChampSurveillableController.class
+com\fluttiris\admincontrol\document\application\DocumentEtatService.class
 com\fluttiris\admincontrol\messagerie\domain\RegleAutomatisation.class
 com\fluttiris\admincontrol\messagerie\application\MessageService.class
 com\fluttiris\admincontrol\client\api\ClientController.class
@@ -64,6 +65,8 @@ com\fluttiris\admincontrol\document\domain\CibleDocument.class
 com\fluttiris\admincontrol\document\domain\TypeDocument.class
 com\fluttiris\admincontrol\messagerie\domain\MessagePlanifie.class
 com\fluttiris\admincontrol\qrcode\api\dto\VerificationResponse.class
+com\fluttiris\admincontrol\document\domain\DocumentEtatRepository.class
+com\fluttiris\admincontrol\document\api\DocumentEtatController.class
 com\fluttiris\admincontrol\configuration\api\dto\CorpsDeMetierResponse.class
 com\fluttiris\admincontrol\document\domain\TypeDocumentRepository.class
 com\fluttiris\admincontrol\auth\api\dto\CreateUtilisateurRequest.class
@@ -76,12 +79,15 @@ com\fluttiris\admincontrol\auth\domain\Utilisateur.class
 com\fluttiris\admincontrol\chantier\application\ChantierService.class
 com\fluttiris\admincontrol\configuration\api\dto\CreateSalarieFonctionRequest.class
 com\fluttiris\admincontrol\controle\api\dto\CreateControleRequest.class
+com\fluttiris\admincontrol\document\api\dto\DocumentEtatResponse.class
 com\fluttiris\admincontrol\chantier\api\dto\ChantierUtilisateurResponse.class
 com\fluttiris\admincontrol\common\exception\GlobalExceptionHandler$ApiError.class
 com\fluttiris\admincontrol\messagerie\application\AutomatisationSchedulerService.class
 com\fluttiris\admincontrol\document\api\dto\CreateDocumentRequest.class
 com\fluttiris\admincontrol\chantier\api\dto\CreateChantierRequest.class
+com\fluttiris\admincontrol\document\api\dto\RefuserDocumentRequest.class
 com\fluttiris\admincontrol\entreprise\domain\AffectationEntrepriseChantierRepository.class
+com\fluttiris\admincontrol\document\domain\DocumentEtat.class
 com\fluttiris\admincontrol\entreprise\application\EntrepriseService.class
 com\fluttiris\admincontrol\messagerie\api\dto\PlanifierMessageRequest.class
 com\fluttiris\admincontrol\messagerie\application\champs\DocumentExpirationChamp.class
@@ -105,6 +111,7 @@ com\fluttiris\admincontrol\client\api\dto\CreateClientRequest.class
 com\fluttiris\admincontrol\document\domain\FormatDocument.class
 com\fluttiris\admincontrol\auth\api\dto\LoginResponse.class
 com\fluttiris\admincontrol\configuration\api\dto\SalarieFonctionResponse.class
+com\fluttiris\admincontrol\document\api\dto\CreateDocumentEtatRequest.class
 com\fluttiris\admincontrol\messagerie\domain\RegleAutomatisationRepository.class
 com\fluttiris\admincontrol\salarie\domain\AffectationSalarieChantier.class
 com\fluttiris\admincontrol\chantier\application\ChantierUtilisateurService.class

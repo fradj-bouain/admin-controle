@@ -12,6 +12,7 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -24,6 +25,7 @@ import java.util.UUID;
  */
 @Entity
 @Table(name = "utilisateur")
+@SQLRestriction("deleted_at IS NULL")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Utilisateur extends Auditable {
@@ -84,5 +86,13 @@ public class Utilisateur extends Auditable {
         utilisateur.clientId = clientId;
         utilisateur.controleTiersId = controleTiersId;
         return utilisateur;
+    }
+
+    public void activer() {
+        this.actif = true;
+    }
+
+    public void desactiver() {
+        this.actif = false;
     }
 }

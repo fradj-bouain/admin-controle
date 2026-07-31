@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/utilisateurs")
@@ -31,5 +32,21 @@ public class UtilisateurController {
     @GetMapping
     public List<UtilisateurResponse> lister() {
         return utilisateurService.lister().stream().map(UtilisateurResponse::from).toList();
+    }
+
+    @PostMapping("/{id}/desactiver")
+    public UtilisateurResponse desactiver(@PathVariable UUID id) {
+        return UtilisateurResponse.from(utilisateurService.desactiver(id));
+    }
+
+    @PostMapping("/{id}/activer")
+    public UtilisateurResponse activer(@PathVariable UUID id) {
+        return UtilisateurResponse.from(utilisateurService.activer(id));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> supprimer(@PathVariable UUID id) {
+        utilisateurService.supprimer(id);
+        return ResponseEntity.noContent().build();
     }
 }
