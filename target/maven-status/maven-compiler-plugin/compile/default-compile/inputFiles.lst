@@ -37,6 +37,7 @@ C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\ad
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\common\exception\BusinessRuleViolationException.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\common\exception\EntityNotFoundException.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\common\exception\GlobalExceptionHandler.java
+C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\common\mail\EmailService.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\common\security\CurrentUser.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\common\security\ScopeAuthorizationService.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\config\JpaAuditingConfig.java
@@ -85,6 +86,7 @@ C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\ad
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\document\api\dto\CreateTypeDocumentRequest.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\document\api\dto\DocumentEtatResponse.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\document\api\dto\DocumentResponse.java
+C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\document\api\dto\NotifierDocumentRequest.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\document\api\dto\RefuserDocumentRequest.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\document\api\dto\TypeDocumentResponse.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\document\api\TypeDocumentController.java

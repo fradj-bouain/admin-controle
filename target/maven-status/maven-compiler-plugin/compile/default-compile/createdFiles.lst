@@ -24,6 +24,7 @@ com\fluttiris\admincontrol\salarie\api\SalarieController.class
 com\fluttiris\admincontrol\messagerie\api\ChampSurveillableController.class
 com\fluttiris\admincontrol\document\application\DocumentEtatService.class
 com\fluttiris\admincontrol\messagerie\domain\RegleAutomatisation.class
+com\fluttiris\admincontrol\common\mail\EmailService.class
 com\fluttiris\admincontrol\messagerie\application\MessageService.class
 com\fluttiris\admincontrol\client\api\ClientController.class
 com\fluttiris\admincontrol\controle\application\ControleService.class
@@ -60,6 +61,7 @@ com\fluttiris\admincontrol\salarie\application\AffectationSalarieChantierService
 com\fluttiris\admincontrol\entreprise\domain\AffectationEntrepriseChantier.class
 com\fluttiris\admincontrol\chantier\api\dto\AccorderAccesRequest.class
 com\fluttiris\admincontrol\configuration\domain\SalarieFonction.class
+com\fluttiris\admincontrol\document\api\dto\NotifierDocumentRequest.class
 com\fluttiris\admincontrol\common\exception\EntityNotFoundException.class
 com\fluttiris\admincontrol\document\api\DocumentController.class
 com\fluttiris\admincontrol\messagerie\domain\DestinataireType.class

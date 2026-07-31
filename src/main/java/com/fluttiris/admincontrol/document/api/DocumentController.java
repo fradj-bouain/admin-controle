@@ -2,6 +2,7 @@ package com.fluttiris.admincontrol.document.api;
 
 import com.fluttiris.admincontrol.document.api.dto.CreateDocumentRequest;
 import com.fluttiris.admincontrol.document.api.dto.DocumentResponse;
+import com.fluttiris.admincontrol.document.api.dto.NotifierDocumentRequest;
 import com.fluttiris.admincontrol.document.api.dto.RefuserDocumentRequest;
 import com.fluttiris.admincontrol.document.application.DocumentService;
 import com.fluttiris.admincontrol.common.security.CurrentUser;
@@ -65,6 +66,13 @@ public class DocumentController {
     public DocumentResponse refuser(@PathVariable UUID id, @RequestBody(required = false) RefuserDocumentRequest request) {
         UUID documentEtatId = request != null ? request.documentEtatId() : null;
         return DocumentResponse.from(documentService.refuser(id, documentEtatId));
+    }
+
+    @PostMapping("/{id}/notifier")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<Void> notifier(@PathVariable UUID id, @Valid @RequestBody NotifierDocumentRequest request) {
+        documentService.notifier(id, request.email(), request.sujet(), request.description());
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
