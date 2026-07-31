@@ -2,8 +2,10 @@ package com.fluttiris.admincontrol.entreprise.application;
 
 import com.fluttiris.admincontrol.common.exception.EntityNotFoundException;
 import com.fluttiris.admincontrol.entreprise.domain.Entreprise;
+import com.fluttiris.admincontrol.entreprise.domain.EntrepriseCreeeEvent;
 import com.fluttiris.admincontrol.entreprise.domain.EntrepriseRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +18,7 @@ import java.util.UUID;
 public class EntrepriseService {
 
     private final EntrepriseRepository entrepriseRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public Entreprise creer(String raisonSociale, String siret, String adresse, String adresse2, String adresse3,
                              String codePostal, String ville, UUID paysId, UUID corpsDeMetierId, String telephone,
@@ -25,7 +28,9 @@ public class EntrepriseService {
         Entreprise entreprise = Entreprise.creer(raisonSociale, siret, adresse, adresse2, adresse3, codePostal,
             ville, paysId, corpsDeMetierId, telephone, telephone2, telephone3, fax, email, email2, email3,
             formeJuridique, siren, rcsRci, tvaIntra, numCotisant, responsableSignataireAgrement, commentaire);
-        return entrepriseRepository.save(entreprise);
+        entreprise = entrepriseRepository.save(entreprise);
+        eventPublisher.publishEvent(new EntrepriseCreeeEvent(entreprise.getId()));
+        return entreprise;
     }
 
     public Entreprise modifier(UUID id, String raisonSociale, String siret, String adresse, String adresse2,

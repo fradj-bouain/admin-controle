@@ -23,8 +23,9 @@ public class RegleAutomatisationController {
     @PostMapping
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<RegleAutomatisationResponse> creer(@Valid @RequestBody CreateRegleAutomatisationRequest request) {
-        var regle = regleAutomatisationService.creer(request.nom(), request.champSurveillableId(), request.nbJoursAvant(),
-            request.cibleGroupe(), request.destinataireType(), request.destinataireId(), request.sujet(), request.contenu());
+        var regle = regleAutomatisationService.creer(request.nom(), request.typeDeclencheur(), request.champSurveillableId(),
+            request.nbJoursAvant(), request.cibleGroupe(), request.destinataireType(), request.destinataireId(),
+            request.sujet(), request.contenu(), request.numeroInterne(), request.titreInterne());
         return ResponseEntity.status(HttpStatus.CREATED).body(RegleAutomatisationResponse.from(regle));
     }
 
@@ -43,9 +44,9 @@ public class RegleAutomatisationController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public RegleAutomatisationResponse modifier(@PathVariable UUID id, @Valid @RequestBody CreateRegleAutomatisationRequest request) {
-        var regle = regleAutomatisationService.modifier(id, request.nom(), request.champSurveillableId(),
+        var regle = regleAutomatisationService.modifier(id, request.nom(), request.typeDeclencheur(), request.champSurveillableId(),
             request.nbJoursAvant(), request.cibleGroupe(), request.destinataireType(), request.destinataireId(),
-            request.sujet(), request.contenu());
+            request.sujet(), request.contenu(), request.numeroInterne(), request.titreInterne());
         return RegleAutomatisationResponse.from(regle);
     }
 
@@ -65,6 +66,13 @@ public class RegleAutomatisationController {
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<Void> supprimer(@PathVariable UUID id) {
         regleAutomatisationService.supprimer(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/envoyer-maintenant")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<Void> envoyerMaintenant(@PathVariable UUID id) {
+        regleAutomatisationService.envoyerMaintenant(id);
         return ResponseEntity.noContent().build();
     }
 }

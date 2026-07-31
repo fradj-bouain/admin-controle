@@ -13,6 +13,10 @@ import com.fluttiris.admincontrol.messagerie.domain.MessagePlanifieRepository;
 import com.fluttiris.admincontrol.messagerie.domain.RegleAutomatisation;
 import com.fluttiris.admincontrol.messagerie.domain.RegleAutomatisationRepository;
 import com.fluttiris.admincontrol.messagerie.domain.StatutMessagePlanifie;
+import com.fluttiris.admincontrol.messagerie.domain.TypeDeclencheur;
+import com.fluttiris.admincontrol.salarie.domain.Salarie;
+import com.fluttiris.admincontrol.salarie.domain.SalarieRepository;
+import com.fluttiris.admincontrol.salarie.domain.StatutSalarie;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -25,10 +29,12 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Moteur d'automatisation de la messagerie : génère des messages planifiés à
- * partir des règles actives (relance N jours avant l'échéance détectée par le
- * ChampSurveillable de la règle), puis envoie tout message planifié (manuel
- * ou généré) arrivé à échéance.
+ * Moteur d'automatisation de la messagerie. Trois sources génèrent des
+ * MessagePlanifie : le scan quotidien des règles CHAMP_SURVEILLABLE (relance
+ * N jours avant une échéance de date), le tick PERIODIQUE (récurrence pure,
+ * indépendante de toute entité), et les événements de création/affectation
+ * (voir AutomatisationEvenementListener, déclenché en temps réel). Un seul
+ * tick envoie ensuite tout MessagePlanifie (manuel ou généré) arrivé à échéance.
  */
 @Service
 @RequiredArgsConstructor
@@ -40,14 +46,32 @@ public class AutomatisationSchedulerService {
     private final UtilisateurRepository utilisateurRepository;
     private final ClientRepository clientRepository;
     private final EntrepriseRepository entrepriseRepository;
+    private final SalarieRepository salarieRepository;
     private final MessageService messageService;
 
     @Scheduled(cron = "0 0 7 * * *")
     @Transactional
     public void genererMessagesDepuisRegles() {
         for (RegleAutomatisation regle : regleAutomatisationRepository.findByActifTrue()) {
+            if (regle.getTypeDeclencheur() != TypeDeclencheur.CHAMP_SURVEILLABLE) {
+                continue;
+            }
             champSurveillableRegistry.parId(regle.getChampSurveillableId())
-                .ifPresent(champ -> genererDepuisRegle(regle, champ.rechercher(LocalDate.now().plusDays(regle.getNbJoursAvant()))));
+                .ifPresent(champ -> genererDepuisChampSurveillable(regle, champ.rechercher(LocalDate.now().plusDays(regle.getNbJoursAvant()))));
+        }
+    }
+
+    @Scheduled(cron = "0 0 * * * *")
+    @Transactional
+    public void genererDepuisPeriodique() {
+        LocalDate aujourdHui = LocalDate.now();
+        for (RegleAutomatisation regle : regleAutomatisationRepository.findByActifTrue()) {
+            if (regle.getTypeDeclencheur() != TypeDeclencheur.PERIODIQUE || !regle.periodiqueDue(aujourdHui)) {
+                continue;
+            }
+            messagePlanifieRepository.save(
+                MessagePlanifie.genererDepuisRegle(regle, null, null, regle.getSujet(), regle.getContenu(), Instant.now()));
+            regle.marquerExecutee();
         }
     }
 
@@ -57,15 +81,23 @@ public class AutomatisationSchedulerService {
         List<MessagePlanifie> dus = messagePlanifieRepository
             .findByStatutAndDateEnvoiPrevueLessThanEqualOrderByDateEnvoiPrevue(StatutMessagePlanifie.EN_ATTENTE, Instant.now());
         for (MessagePlanifie message : dus) {
-            for (UUID destinataireId : resoudreDestinataires(message)) {
-                messageService.envoyer(message.getExpediteurUtilisateurId(), message.getChantierId(),
-                    resoudreDestinataireType(message), destinataireId, message.getSujet(), message.getContenu());
-            }
-            message.marquerEnvoye();
+            envoyerUnMessagePlanifie(message);
         }
     }
 
-    private void genererDepuisRegle(RegleAutomatisation regle, List<EvenementDetecte> evenements) {
+    /** Réutilisé par le tick périodique ET le déclenchement manuel ("Envoyer maintenant"). */
+    void envoyerUnMessagePlanifie(MessagePlanifie message) {
+        for (UUID destinataireId : resoudreDestinataires(message)) {
+            messageService.envoyer(message.getExpediteurUtilisateurId(), message.getChantierId(),
+                resoudreDestinataireType(message), destinataireId, message.getSujet(), message.getContenu());
+        }
+        message.marquerEnvoye();
+        if (message.getRegleId() != null) {
+            regleAutomatisationRepository.findById(message.getRegleId()).ifPresent(RegleAutomatisation::marquerEnvoyee);
+        }
+    }
+
+    private void genererDepuisChampSurveillable(RegleAutomatisation regle, List<EvenementDetecte> evenements) {
         for (EvenementDetecte evenement : evenements) {
             if (messagePlanifieRepository.existsByRegleIdAndSourceEntityId(regle.getId(), evenement.sourceEntityId())) {
                 continue;
@@ -90,7 +122,7 @@ public class AutomatisationSchedulerService {
             case SPECIFIQUE -> message.getDestinataireType();
             case TOUS_UTILISATEURS -> DestinataireType.UTILISATEUR;
             case TOUS_CLIENTS -> DestinataireType.CLIENT;
-            case TOUTES_ENTREPRISES -> DestinataireType.ENTREPRISE;
+            case TOUTES_ENTREPRISES, TOUS_SALARIES -> DestinataireType.ENTREPRISE;
         };
     }
 
@@ -100,6 +132,10 @@ public class AutomatisationSchedulerService {
             case TOUS_UTILISATEURS -> utilisateurRepository.findByActifTrue().stream().map(Utilisateur::getId).toList();
             case TOUS_CLIENTS -> clientRepository.findByActifTrue().stream().map(Client::getId).toList();
             case TOUTES_ENTREPRISES -> entrepriseRepository.findByActifTrue().stream().map(Entreprise::getId).toList();
+            // Pas de compte/boîte de réception propre aux salariés : on route vers
+            // l'ensemble (dédupliqué) des entreprises qui emploient un salarié actif.
+            case TOUS_SALARIES -> salarieRepository.findByStatut(StatutSalarie.ACTIF).stream()
+                .map(Salarie::getEntrepriseEmployeurId).distinct().toList();
         };
     }
 }

@@ -2,8 +2,10 @@ package com.fluttiris.admincontrol.salarie.application;
 
 import com.fluttiris.admincontrol.common.exception.EntityNotFoundException;
 import com.fluttiris.admincontrol.salarie.domain.Salarie;
+import com.fluttiris.admincontrol.salarie.domain.SalarieCreeEvent;
 import com.fluttiris.admincontrol.salarie.domain.SalarieRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,12 +19,15 @@ import java.util.UUID;
 public class SalarieService {
 
     private final SalarieRepository salarieRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public Salarie creer(String nom, String prenom, LocalDate dateNaissance, UUID nationalitePaysId,
                           UUID entrepriseEmployeurId, UUID typeSalarieId, UUID typeContratId, UUID fonctionId) {
         Salarie salarie = Salarie.creer(nom, prenom, dateNaissance, nationalitePaysId, entrepriseEmployeurId,
             typeSalarieId, typeContratId, fonctionId);
-        return salarieRepository.save(salarie);
+        salarie = salarieRepository.save(salarie);
+        eventPublisher.publishEvent(new SalarieCreeEvent(salarie.getId(), salarie.getEntrepriseEmployeurId()));
+        return salarie;
     }
 
     public Salarie modifier(UUID id, String nom, String prenom, LocalDate dateNaissance, UUID nationalitePaysId,

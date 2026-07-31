@@ -3,9 +3,11 @@ package com.fluttiris.admincontrol.entreprise.application;
 import com.fluttiris.admincontrol.common.exception.BusinessRuleViolationException;
 import com.fluttiris.admincontrol.common.exception.EntityNotFoundException;
 import com.fluttiris.admincontrol.entreprise.domain.AffectationEntrepriseChantier;
+import com.fluttiris.admincontrol.entreprise.domain.AffectationEntrepriseChantierCreeeEvent;
 import com.fluttiris.admincontrol.entreprise.domain.AffectationEntrepriseChantierRepository;
 import com.fluttiris.admincontrol.entreprise.domain.RoleEntreprise;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +20,7 @@ import java.util.UUID;
 public class AffectationEntrepriseChantierService {
 
     private final AffectationEntrepriseChantierRepository affectationRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * @param affectationParenteId affectation (sur ce même chantier) de l'entreprise qui invite
@@ -41,7 +44,10 @@ public class AffectationEntrepriseChantierService {
 
         AffectationEntrepriseChantier affectation = AffectationEntrepriseChantier.creer(
             chantierId, entrepriseId, role, parente);
-        return affectationRepository.save(affectation);
+        affectation = affectationRepository.save(affectation);
+        eventPublisher.publishEvent(new AffectationEntrepriseChantierCreeeEvent(
+            affectation.getId(), affectation.getEntrepriseId(), affectation.getChantierId()));
+        return affectation;
     }
 
     @Transactional(readOnly = true)

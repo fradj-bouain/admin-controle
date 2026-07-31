@@ -2,10 +2,12 @@ com\fluttiris\admincontrol\entreprise\domain\Entreprise.class
 com\fluttiris\admincontrol\messagerie\domain\MessagePlanifieRepository.class
 com\fluttiris\admincontrol\document\application\TypeDocumentService.class
 com\fluttiris\admincontrol\controle\api\dto\RapportControleResponse.class
+com\fluttiris\admincontrol\entreprise\domain\AffectationEntrepriseChantierCreeeEvent.class
 com\fluttiris\admincontrol\auth\domain\UtilisateurRepository.class
 com\fluttiris\admincontrol\document\api\dto\DocumentResponse.class
 com\fluttiris\admincontrol\chantier\domain\ChantierUtilisateur.class
 com\fluttiris\admincontrol\controle\domain\Controle.class
+com\fluttiris\admincontrol\salarie\domain\SalarieCreeEvent.class
 com\fluttiris\admincontrol\configuration\domain\TypeContratSalarieRepository.class
 com\fluttiris\admincontrol\configuration\domain\CorpsDeMetier.class
 com\fluttiris\admincontrol\common\security\CurrentUser.class
@@ -68,6 +70,7 @@ com\fluttiris\admincontrol\qrcode\api\dto\VerificationResponse.class
 com\fluttiris\admincontrol\document\domain\DocumentEtatRepository.class
 com\fluttiris\admincontrol\document\api\DocumentEtatController.class
 com\fluttiris\admincontrol\configuration\api\dto\CorpsDeMetierResponse.class
+com\fluttiris\admincontrol\messagerie\domain\TypeDeclencheur.class
 com\fluttiris\admincontrol\document\domain\TypeDocumentRepository.class
 com\fluttiris\admincontrol\auth\api\dto\CreateUtilisateurRequest.class
 com\fluttiris\admincontrol\auth\DefaultAdminSeeder.class
@@ -141,6 +144,7 @@ com\fluttiris\admincontrol\configuration\domain\TypeSalarie.class
 com\fluttiris\admincontrol\entreprise\domain\RoleEntreprise.class
 com\fluttiris\admincontrol\client\application\ClientService.class
 com\fluttiris\admincontrol\configuration\api\dto\CreateCorpsDeMetierRequest.class
+com\fluttiris\admincontrol\messagerie\application\AutomatisationEvenementListener.class
 com\fluttiris\admincontrol\document\api\dto\TypeDocumentResponse.class
 com\fluttiris\admincontrol\messagerie\api\dto\RegleAutomatisationResponse.class
 com\fluttiris\admincontrol\configuration\domain\TypeContratSalarie.class
@@ -155,6 +159,7 @@ com\fluttiris\admincontrol\controle\domain\RapportControle.class
 com\fluttiris\admincontrol\chantier\domain\Chantier.class
 com\fluttiris\admincontrol\salarie\api\dto\AffecterSalarieRequest.class
 com\fluttiris\admincontrol\qrcode\application\QrCodeService.class
+com\fluttiris\admincontrol\entreprise\domain\EntrepriseCreeeEvent.class
 com\fluttiris\admincontrol\controle\api\dto\ControleResponse.class
 com\fluttiris\admincontrol\salarie\api\dto\MajSuiviAffectationRequest.class
 com\fluttiris\admincontrol\configuration\domain\Pays.class

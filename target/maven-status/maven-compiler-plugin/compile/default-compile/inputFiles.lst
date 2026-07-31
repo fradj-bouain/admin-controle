@@ -110,8 +110,10 @@ C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\ad
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\entreprise\application\ChantierAuthorizationService.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\entreprise\application\EntrepriseService.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\entreprise\domain\AffectationEntrepriseChantier.java
+C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\entreprise\domain\AffectationEntrepriseChantierCreeeEvent.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\entreprise\domain\AffectationEntrepriseChantierRepository.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\entreprise\domain\Entreprise.java
+C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\entreprise\domain\EntrepriseCreeeEvent.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\entreprise\domain\EntrepriseRepository.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\entreprise\domain\RoleEntreprise.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\messagerie\api\ChampSurveillableController.java
@@ -125,6 +127,7 @@ C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\ad
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\messagerie\api\MessageController.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\messagerie\api\MessagePlanifieController.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\messagerie\api\RegleAutomatisationController.java
+C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\messagerie\application\AutomatisationEvenementListener.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\messagerie\application\AutomatisationSchedulerService.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\messagerie\application\champs\ChantierControleAVenirChamp.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\messagerie\application\champs\DocumentExpirationChamp.java
@@ -143,6 +146,7 @@ C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\ad
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\messagerie\domain\RegleAutomatisation.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\messagerie\domain\RegleAutomatisationRepository.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\messagerie\domain\StatutMessagePlanifie.java
+C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\messagerie\domain\TypeDeclencheur.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\qrcode\api\dto\QrCodeResponse.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\qrcode\api\dto\VerificationResponse.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\qrcode\api\dto\VerifierQrCodeRequest.java
@@ -164,6 +168,7 @@ C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\ad
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\salarie\domain\AffectationSalarieChantier.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\salarie\domain\AffectationSalarieChantierRepository.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\salarie\domain\Salarie.java
+C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\salarie\domain\SalarieCreeEvent.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\salarie\domain\SalarieRepository.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\salarie\domain\StatutAcces.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\salarie\domain\StatutSalarie.java

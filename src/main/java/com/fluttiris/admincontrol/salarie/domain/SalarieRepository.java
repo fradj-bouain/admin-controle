@@ -8,4 +8,6 @@ import java.util.UUID;
 public interface SalarieRepository extends JpaRepository<Salarie, UUID> {
 
     List<Salarie> findByEntrepriseEmployeurId(UUID entrepriseId);
+
+    List<Salarie> findByStatut(StatutSalarie statut);
 }
