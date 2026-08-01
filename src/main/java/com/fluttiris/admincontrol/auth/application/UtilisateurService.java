@@ -37,6 +37,16 @@ public class UtilisateurService {
     }
 
     @Transactional(readOnly = true)
+    public List<Utilisateur> listerParClient(UUID clientId) {
+        return utilisateurRepository.findByClientId(clientId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Utilisateur> listerParEntreprise(UUID entrepriseId) {
+        return utilisateurRepository.findByEntrepriseId(entrepriseId);
+    }
+
+    @Transactional(readOnly = true)
     public Utilisateur obtenir(UUID id) {
         return utilisateurRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Utilisateur", id));

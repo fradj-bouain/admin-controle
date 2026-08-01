@@ -21,7 +21,7 @@ public class TypeDocumentController {
     private final TypeDocumentService typeDocumentService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<TypeDocumentResponse> creer(@Valid @RequestBody CreateTypeDocumentRequest request) {
         var type = typeDocumentService.creer(request.libelle(), request.cible(), request.obligatoire(),
             request.format(), request.corpsDeMetierId(), request.paysId(), request.dateDebutValiditeRequise(),
@@ -43,12 +43,19 @@ public class TypeDocumentController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public TypeDocumentResponse modifier(@PathVariable UUID id, @Valid @RequestBody CreateTypeDocumentRequest request) {
         var type = typeDocumentService.modifier(id, request.libelle(), request.cible(), request.obligatoire(),
             request.format(), request.corpsDeMetierId(), request.paysId(), request.dateDebutValiditeRequise(),
             request.dateFinValiditeRequise(), request.nbJoursRelanceAvant(), request.nbJoursRecurrence(),
             request.retireAccordAcces());
         return TypeDocumentResponse.from(type);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<Void> supprimer(@PathVariable UUID id) {
+        typeDocumentService.supprimer(id);
+        return ResponseEntity.noContent().build();
     }
 }

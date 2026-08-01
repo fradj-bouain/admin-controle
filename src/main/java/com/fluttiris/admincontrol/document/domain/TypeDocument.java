@@ -10,8 +10,10 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -20,6 +22,7 @@ import java.util.UUID;
  */
 @Entity
 @Table(name = "type_document")
+@SQLRestriction("deleted_at IS NULL")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
@@ -65,6 +68,9 @@ public class TypeDocument {
     @Column(name = "retire_accord_acces", nullable = false)
     private boolean retireAccordAcces = true;
 
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
     public static TypeDocument creer(String libelle, CibleDocument cible, boolean obligatoire, FormatDocument format,
                                       UUID corpsDeMetierId, UUID paysId, boolean dateDebutValiditeRequise,
                                       boolean dateFinValiditeRequise, int nbJoursRelanceAvant,
@@ -99,5 +105,9 @@ public class TypeDocument {
         this.nbJoursRelanceAvant = nbJoursRelanceAvant;
         this.nbJoursRecurrence = nbJoursRecurrence;
         this.retireAccordAcces = retireAccordAcces;
+    }
+
+    public void supprimer() {
+        this.deletedAt = Instant.now();
     }
 }

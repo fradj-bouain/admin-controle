@@ -1,6 +1,10 @@
 package com.fluttiris.admincontrol.salarie.application;
 
+import com.fluttiris.admincontrol.chantier.domain.Chantier;
+import com.fluttiris.admincontrol.chantier.domain.ChantierRepository;
 import com.fluttiris.admincontrol.common.exception.EntityNotFoundException;
+import com.fluttiris.admincontrol.salarie.domain.AffectationSalarieChantier;
+import com.fluttiris.admincontrol.salarie.domain.AffectationSalarieChantierRepository;
 import com.fluttiris.admincontrol.salarie.domain.Salarie;
 import com.fluttiris.admincontrol.salarie.domain.SalarieCreeEvent;
 import com.fluttiris.admincontrol.salarie.domain.SalarieRepository;
@@ -19,6 +23,8 @@ import java.util.UUID;
 public class SalarieService {
 
     private final SalarieRepository salarieRepository;
+    private final ChantierRepository chantierRepository;
+    private final AffectationSalarieChantierRepository affectationSalarieChantierRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     public Salarie creer(String nom, String prenom, LocalDate dateNaissance, UUID nationalitePaysId,
@@ -49,6 +55,15 @@ public class SalarieService {
         return entrepriseId != null
             ? salarieRepository.findByEntrepriseEmployeurId(entrepriseId)
             : salarieRepository.findAll();
+    }
+
+    /** Salariés affectés à un chantier de ce client, via leurs affectations chantier. */
+    @Transactional(readOnly = true)
+    public List<Salarie> listerParClient(UUID clientId) {
+        List<UUID> chantierIds = chantierRepository.findByClientId(clientId).stream().map(Chantier::getId).toList();
+        List<UUID> salarieIds = affectationSalarieChantierRepository.findByChantierIdIn(chantierIds).stream()
+            .map(AffectationSalarieChantier::getSalarieId).distinct().toList();
+        return salarieRepository.findAllById(salarieIds);
     }
 
     public Salarie desactiver(UUID id) {

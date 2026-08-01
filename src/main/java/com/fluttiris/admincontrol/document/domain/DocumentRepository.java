@@ -13,4 +13,6 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
     List<Document> findByEntrepriseId(UUID entrepriseId);
 
     List<Document> findByDateExpiration(LocalDate dateExpiration);
+
+    List<Document> findByStatutValidationOrderByCreatedAtDesc(StatutValidation statutValidation);
 }

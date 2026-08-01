@@ -1,12 +1,15 @@
 package com.fluttiris.admincontrol.document.api;
 
+import com.fluttiris.admincontrol.common.audit.HistoriqueModificationResponse;
 import com.fluttiris.admincontrol.document.api.dto.CreateDocumentRequest;
+import com.fluttiris.admincontrol.document.api.dto.DocumentEnAttenteResponse;
 import com.fluttiris.admincontrol.document.api.dto.DocumentResponse;
 import com.fluttiris.admincontrol.document.api.dto.NotifierDocumentRequest;
 import com.fluttiris.admincontrol.document.api.dto.RefuserDocumentRequest;
 import com.fluttiris.admincontrol.document.application.DocumentService;
 import com.fluttiris.admincontrol.common.security.CurrentUser;
 import com.fluttiris.admincontrol.common.security.ScopeAuthorizationService;
+import com.fluttiris.admincontrol.messagerie.api.dto.MessagePlanifieResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -56,29 +59,65 @@ public class DocumentController {
     }
 
     @PostMapping("/{id}/valider")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public DocumentResponse valider(@PathVariable UUID id) {
         return DocumentResponse.from(documentService.valider(id));
     }
 
     @PostMapping("/{id}/refuser")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public DocumentResponse refuser(@PathVariable UUID id, @RequestBody(required = false) RefuserDocumentRequest request) {
         UUID documentEtatId = request != null ? request.documentEtatId() : null;
         return DocumentResponse.from(documentService.refuser(id, documentEtatId));
     }
 
     @PostMapping("/{id}/notifier")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Void> notifier(@PathVariable UUID id, @Valid @RequestBody NotifierDocumentRequest request) {
         documentService.notifier(id, request.email(), request.sujet(), request.description());
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Void> supprimer(@PathVariable UUID id) {
         documentService.supprimer(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/historique")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
+        + "(#salarieId != null and @currentUser.entrepriseId().isPresent() and @scopeAuthz.salarieAppartientAEntreprise(#salarieId, @currentUser.entrepriseId().get())) or "
+        + "(#entrepriseId != null and @currentUser.entrepriseId().isPresent() and @currentUser.entrepriseId().get().equals(#entrepriseId))")
+    public List<HistoriqueModificationResponse> historique(@RequestParam(required = false) UUID salarieId,
+                                                             @RequestParam(required = false) UUID entrepriseId) {
+        if (salarieId != null) {
+            return documentService.listerHistoriqueParSalarie(salarieId);
+        }
+        if (entrepriseId != null) {
+            return documentService.listerHistoriqueParEntreprise(entrepriseId);
+        }
+        return List.of();
+    }
+
+    @GetMapping("/relances")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
+        + "(#salarieId != null and @currentUser.entrepriseId().isPresent() and @scopeAuthz.salarieAppartientAEntreprise(#salarieId, @currentUser.entrepriseId().get())) or "
+        + "(#entrepriseId != null and @currentUser.entrepriseId().isPresent() and @currentUser.entrepriseId().get().equals(#entrepriseId))")
+    public List<MessagePlanifieResponse> relances(@RequestParam(required = false) UUID salarieId,
+                                                   @RequestParam(required = false) UUID entrepriseId) {
+        if (salarieId != null) {
+            return documentService.listerRelancesParSalarie(salarieId);
+        }
+        if (entrepriseId != null) {
+            return documentService.listerRelancesParEntreprise(entrepriseId);
+        }
+        return List.of();
+    }
+
+    @GetMapping("/en-attente")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public List<DocumentEnAttenteResponse> enAttente() {
+        return documentService.listerEnAttente();
     }
 }

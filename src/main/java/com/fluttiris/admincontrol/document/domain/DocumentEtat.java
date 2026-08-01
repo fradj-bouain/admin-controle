@@ -8,18 +8,20 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.Instant;
 import java.util.UUID;
 
 /**
  * Motif de refus paramétrable d'un document (ex : "Attestation expirée",
  * "Erreur nom/prénom") — remplace le texte libre lors d'un refus, comme sur
- * le site legacy. Catalogue de référence : pas de suppression logique (voir
- * convention documentée dans V1__init_schema.sql).
+ * le site legacy. Suppression logique (deleted_at) comme les autres référentiels.
  */
 @Entity
 @Table(name = "document_etat")
+@SQLRestriction("deleted_at IS NULL")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
@@ -42,6 +44,9 @@ public class DocumentEtat {
     @Column(name = "valide_le_document", nullable = false)
     private boolean valideLeDocument = false;
 
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
     public static DocumentEtat creer(String titre, boolean parDefaut, boolean dateExpiree, boolean valideLeDocument) {
         DocumentEtat etat = new DocumentEtat();
         etat.titre = titre;
@@ -56,5 +61,9 @@ public class DocumentEtat {
         this.parDefaut = parDefaut;
         this.dateExpiree = dateExpiree;
         this.valideLeDocument = valideLeDocument;
+    }
+
+    public void supprimer() {
+        this.deletedAt = Instant.now();
     }
 }

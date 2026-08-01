@@ -1,5 +1,6 @@
 package com.fluttiris.admincontrol.common.security;
 
+import com.fluttiris.admincontrol.auth.domain.UtilisateurRepository;
 import com.fluttiris.admincontrol.chantier.domain.ChantierRepository;
 import com.fluttiris.admincontrol.controle.domain.ControleRepository;
 import com.fluttiris.admincontrol.salarie.domain.SalarieRepository;
@@ -23,6 +24,7 @@ public class ScopeAuthorizationService {
     private final ChantierRepository chantierRepository;
     private final ControleRepository controleRepository;
     private final SalarieRepository salarieRepository;
+    private final UtilisateurRepository utilisateurRepository;
 
     public boolean chantierAppartientAuClient(UUID chantierId, UUID clientId) {
         return chantierRepository.findById(chantierId)
@@ -39,6 +41,18 @@ public class ScopeAuthorizationService {
     public boolean salarieAppartientAEntreprise(UUID salarieId, UUID entrepriseId) {
         return salarieRepository.findById(salarieId)
             .map(s -> entrepriseId.equals(s.getEntrepriseEmployeurId()))
+            .orElse(false);
+    }
+
+    public boolean utilisateurAppartientAClient(UUID utilisateurId, UUID clientId) {
+        return utilisateurRepository.findById(utilisateurId)
+            .map(u -> clientId.equals(u.getClientId()))
+            .orElse(false);
+    }
+
+    public boolean utilisateurAppartientAEntreprise(UUID utilisateurId, UUID entrepriseId) {
+        return utilisateurRepository.findById(utilisateurId)
+            .map(u -> entrepriseId.equals(u.getEntrepriseId()))
             .orElse(false);
     }
 }

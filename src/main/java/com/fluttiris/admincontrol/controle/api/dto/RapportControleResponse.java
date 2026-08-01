@@ -8,6 +8,7 @@ import java.util.UUID;
 public record RapportControleResponse(
     UUID id,
     UUID controleId,
+    UUID chantierId,
     int nbSalariesControles,
     int nbAccords,
     int nbRefus,
@@ -18,8 +19,8 @@ public record RapportControleResponse(
     UUID responsableUtilisateurId,
     Instant dateEnvoi
 ) {
-    public static RapportControleResponse from(RapportControle r) {
-        return new RapportControleResponse(r.getId(), r.getControleId(), r.getNbSalariesControles(),
+    public static RapportControleResponse from(RapportControle r, UUID chantierId) {
+        return new RapportControleResponse(r.getId(), r.getControleId(), chantierId, r.getNbSalariesControles(),
             r.getNbAccords(), r.getNbRefus(), r.getNbNouvellesEntreprises(), r.getNbNouveauxSalaries(),
             r.getNbEntreprises(), r.getNbSalariesDetaches(), r.getResponsableUtilisateurId(), r.getDateEnvoi());
     }

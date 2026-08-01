@@ -13,7 +13,7 @@ import java.util.UUID;
  * (voir AuthenticationService/JwtConfig — pas de fournisseur d'identité externe).
  * "entreprise_id" / "client_id" / "controle_tiers_id" sont mutuellement exclusifs :
  * chacun n'est présent que pour le type de compte correspondant (Entreprise, Client,
- * Contrôleur) ; absents pour un compte interne (SUPER_ADMIN, ADMIN).
+ * Contrôleur) ; absents pour un compte interne (SUPER_ADMIN).
  */
 @Component
 public class CurrentUser {
@@ -35,6 +35,11 @@ public class CurrentUser {
     public Optional<UUID> controleTiersId() {
         String claim = currentJwt().getClaimAsString("controle_tiers_id");
         return Optional.ofNullable(claim).map(UUID::fromString);
+    }
+
+    public boolean estAdmin() {
+        var roles = currentJwt().getClaimAsStringList("roles");
+        return roles != null && roles.contains("SUPER_ADMIN");
     }
 
     private Jwt currentJwt() {

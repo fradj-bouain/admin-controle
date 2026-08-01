@@ -8,6 +8,7 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -17,6 +18,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "rapport_controle")
+@SQLRestriction("deleted_at IS NULL")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
@@ -55,6 +57,9 @@ public class RapportControle {
     @Column(name = "date_envoi")
     private Instant dateEnvoi;
 
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -81,5 +86,19 @@ public class RapportControle {
 
     public void marquerEnvoye() {
         this.dateEnvoi = Instant.now();
+    }
+
+    // nbSalariesControles/nbAccords/nbRefus/nbEntreprises sont dérivés de la
+    // checklist (controle_salarie) à la génération — pas de valeur métier à les
+    // rouvrir à l'édition, contrairement aux compteurs saisis manuellement.
+    public void modifier(int nbNouvellesEntreprises, int nbNouveauxSalaries, int nbSalariesDetaches, UUID responsableUtilisateurId) {
+        this.nbNouvellesEntreprises = nbNouvellesEntreprises;
+        this.nbNouveauxSalaries = nbNouveauxSalaries;
+        this.nbSalariesDetaches = nbSalariesDetaches;
+        this.responsableUtilisateurId = responsableUtilisateurId;
+    }
+
+    public void supprimer() {
+        this.deletedAt = Instant.now();
     }
 }

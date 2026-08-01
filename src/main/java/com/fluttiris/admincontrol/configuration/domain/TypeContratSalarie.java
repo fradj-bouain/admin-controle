@@ -7,11 +7,14 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
 @Table(name = "type_contrat_salarie")
+@SQLRestriction("deleted_at IS NULL")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TypeContratSalarie {
@@ -25,6 +28,9 @@ public class TypeContratSalarie {
     @Column(nullable = false)
     private String libelle;
 
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
     public static TypeContratSalarie creer(String code, String libelle) {
         TypeContratSalarie typeContratSalarie = new TypeContratSalarie();
         typeContratSalarie.code = code;
@@ -35,5 +41,9 @@ public class TypeContratSalarie {
     public void modifier(String code, String libelle) {
         this.code = code;
         this.libelle = libelle;
+    }
+
+    public void supprimer() {
+        this.deletedAt = Instant.now();
     }
 }

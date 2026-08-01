@@ -21,7 +21,7 @@ public class RegleAutomatisationController {
     private final RegleAutomatisationService regleAutomatisationService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<RegleAutomatisationResponse> creer(@Valid @RequestBody CreateRegleAutomatisationRequest request) {
         var regle = regleAutomatisationService.creer(request.nom(), request.typeDeclencheur(), request.champSurveillableId(),
             request.nbJoursAvant(), request.cibleGroupe(), request.destinataireType(), request.destinataireId(),
@@ -42,7 +42,7 @@ public class RegleAutomatisationController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public RegleAutomatisationResponse modifier(@PathVariable UUID id, @Valid @RequestBody CreateRegleAutomatisationRequest request) {
         var regle = regleAutomatisationService.modifier(id, request.nom(), request.typeDeclencheur(), request.champSurveillableId(),
             request.nbJoursAvant(), request.cibleGroupe(), request.destinataireType(), request.destinataireId(),
@@ -51,26 +51,26 @@ public class RegleAutomatisationController {
     }
 
     @PatchMapping("/{id}/activer")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public RegleAutomatisationResponse activer(@PathVariable UUID id) {
         return RegleAutomatisationResponse.from(regleAutomatisationService.activer(id));
     }
 
     @PatchMapping("/{id}/desactiver")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public RegleAutomatisationResponse desactiver(@PathVariable UUID id) {
         return RegleAutomatisationResponse.from(regleAutomatisationService.desactiver(id));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Void> supprimer(@PathVariable UUID id) {
         regleAutomatisationService.supprimer(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/envoyer-maintenant")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Void> envoyerMaintenant(@PathVariable UUID id) {
         regleAutomatisationService.envoyerMaintenant(id);
         return ResponseEntity.noContent().build();

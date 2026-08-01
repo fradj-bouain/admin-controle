@@ -21,7 +21,7 @@ public class DocumentEtatController {
     private final DocumentEtatService documentEtatService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<DocumentEtatResponse> creer(@Valid @RequestBody CreateDocumentEtatRequest request) {
         var etat = documentEtatService.creer(request.titre(), request.parDefaut(), request.dateExpiree(), request.valideLeDocument());
         return ResponseEntity.status(HttpStatus.CREATED).body(DocumentEtatResponse.from(etat));
@@ -34,9 +34,16 @@ public class DocumentEtatController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public DocumentEtatResponse modifier(@PathVariable UUID id, @Valid @RequestBody CreateDocumentEtatRequest request) {
         var etat = documentEtatService.modifier(id, request.titre(), request.parDefaut(), request.dateExpiree(), request.valideLeDocument());
         return DocumentEtatResponse.from(etat);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<Void> supprimer(@PathVariable UUID id) {
+        documentEtatService.supprimer(id);
+        return ResponseEntity.noContent().build();
     }
 }

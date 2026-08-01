@@ -4,6 +4,8 @@ import com.fluttiris.admincontrol.chantier.domain.Chantier;
 import com.fluttiris.admincontrol.chantier.domain.ChantierRepository;
 import com.fluttiris.admincontrol.chantier.domain.RecurrenceControles;
 import com.fluttiris.admincontrol.common.exception.EntityNotFoundException;
+import com.fluttiris.admincontrol.entreprise.domain.AffectationEntrepriseChantier;
+import com.fluttiris.admincontrol.entreprise.domain.AffectationEntrepriseChantierRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,7 @@ import java.util.UUID;
 public class ChantierService {
 
     private final ChantierRepository chantierRepository;
+    private final AffectationEntrepriseChantierRepository affectationEntrepriseChantierRepository;
 
     public Chantier creer(String nom, UUID clientId, String prestation, String adresse, String adresse2,
                            String adresse3, String codePostal, String ville, UUID paysId, String noteInterne,
@@ -56,6 +59,14 @@ public class ChantierService {
     @Transactional(readOnly = true)
     public List<Chantier> lister() {
         return chantierRepository.findAll();
+    }
+
+    /** Chantiers où l'entreprise a (ou a eu) une affectation, quel que soit son rôle (Principale/STT1/STT2). */
+    @Transactional(readOnly = true)
+    public List<Chantier> listerParEntreprise(UUID entrepriseId) {
+        List<UUID> chantierIds = affectationEntrepriseChantierRepository.findByEntrepriseId(entrepriseId).stream()
+            .map(AffectationEntrepriseChantier::getChantierId).distinct().toList();
+        return chantierRepository.findAllById(chantierIds);
     }
 
     public Chantier desactiver(UUID id) {

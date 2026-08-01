@@ -7,11 +7,14 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
 @Table(name = "salarie_fonction")
+@SQLRestriction("deleted_at IS NULL")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SalarieFonction {
@@ -22,6 +25,9 @@ public class SalarieFonction {
     @Column(nullable = false, unique = true)
     private String libelle;
 
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
     public static SalarieFonction creer(String libelle) {
         SalarieFonction fonction = new SalarieFonction();
         fonction.libelle = libelle;
@@ -30,5 +36,9 @@ public class SalarieFonction {
 
     public void modifier(String libelle) {
         this.libelle = libelle;
+    }
+
+    public void supprimer() {
+        this.deletedAt = Instant.now();
     }
 }

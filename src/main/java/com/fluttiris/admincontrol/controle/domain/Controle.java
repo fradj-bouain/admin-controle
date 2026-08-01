@@ -77,6 +77,14 @@ public class Controle {
         return controle;
     }
 
+    public void modifier(LocalDate dateControle, String remarques, UUID controleTiersId, LocalDate dateFin, boolean termine) {
+        this.dateControle = dateControle;
+        this.remarques = remarques;
+        this.controleTiersId = controleTiersId;
+        this.dateFin = dateFin;
+        this.termine = termine;
+    }
+
     public void supprimer() {
         this.deletedAt = Instant.now();
     }

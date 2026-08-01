@@ -21,7 +21,7 @@ public class ChantierUtilisateurController {
     private final ChantierUtilisateurService chantierUtilisateurService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<ChantierUtilisateurResponse> accorder(
         @PathVariable UUID chantierId, @Valid @RequestBody AccorderAccesRequest request) {
         var acces = chantierUtilisateurService.accorder(chantierId, request.utilisateurId());
@@ -29,13 +29,13 @@ public class ChantierUtilisateurController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public List<ChantierUtilisateurResponse> lister(@PathVariable UUID chantierId) {
         return chantierUtilisateurService.lister(chantierId).stream().map(ChantierUtilisateurResponse::from).toList();
     }
 
     @DeleteMapping("/{utilisateurId}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Void> revoquer(@PathVariable UUID chantierId, @PathVariable UUID utilisateurId) {
         chantierUtilisateurService.revoquer(chantierId, utilisateurId);
         return ResponseEntity.noContent().build();

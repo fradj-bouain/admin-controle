@@ -8,4 +8,6 @@ import java.util.UUID;
 public interface ControleRepository extends JpaRepository<Controle, UUID> {
 
     List<Controle> findByChantierId(UUID chantierId);
+
+    List<Controle> findByControleTiersId(UUID controleTiersId);
 }

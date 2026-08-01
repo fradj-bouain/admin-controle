@@ -13,4 +13,8 @@ public interface UtilisateurRepository extends JpaRepository<Utilisateur, UUID> 
     boolean existsByUsername(String username);
 
     List<Utilisateur> findByActifTrue();
+
+    List<Utilisateur> findByClientId(UUID clientId);
+
+    List<Utilisateur> findByEntrepriseId(UUID entrepriseId);
 }

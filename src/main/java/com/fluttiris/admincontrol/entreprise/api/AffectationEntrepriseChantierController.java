@@ -28,7 +28,7 @@ public class AffectationEntrepriseChantierController {
     private final AffectationEntrepriseChantierService affectationService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or "
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
         + "(@currentUser.entrepriseId().isPresent() and @chantierAuthz.canManageSousTraitants(#chantierId, @currentUser.entrepriseId().get()))")
     public ResponseEntity<AffectationEntrepriseChantierResponse> affecter(
         @PathVariable UUID chantierId, @Valid @RequestBody AffecterEntrepriseRequest request) {
@@ -38,7 +38,8 @@ public class AffectationEntrepriseChantierController {
     }
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or @currentUser.entrepriseId().isEmpty() or "
+        + "@chantierAuthz.isAffectedToChantier(#chantierId, @currentUser.entrepriseId().get())")
     public List<AffectationEntrepriseChantierResponse> lister(@PathVariable UUID chantierId) {
         return affectationService.listerParChantier(chantierId).stream()
             .map(AffectationEntrepriseChantierResponse::from)
@@ -46,7 +47,7 @@ public class AffectationEntrepriseChantierController {
     }
 
     @PostMapping("/{affectationId}/desactiver")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or "
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
         + "(@currentUser.entrepriseId().isPresent() and @chantierAuthz.canManageSousTraitants(#chantierId, @currentUser.entrepriseId().get()))")
     public ResponseEntity<Void> desactiver(@PathVariable UUID chantierId, @PathVariable UUID affectationId) {
         affectationService.desactiver(affectationId);
@@ -54,7 +55,7 @@ public class AffectationEntrepriseChantierController {
     }
 
     @DeleteMapping("/{affectationId}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or "
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
         + "(@currentUser.entrepriseId().isPresent() and @chantierAuthz.canManageSousTraitants(#chantierId, @currentUser.entrepriseId().get()))")
     public ResponseEntity<Void> supprimer(@PathVariable UUID chantierId, @PathVariable UUID affectationId) {
         affectationService.supprimer(affectationId);

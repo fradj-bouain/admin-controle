@@ -38,4 +38,8 @@ public class DocumentEtatService {
     public List<DocumentEtat> lister() {
         return documentEtatRepository.findAll();
     }
+
+    public void supprimer(UUID id) {
+        obtenir(id).supprimer();
+    }
 }

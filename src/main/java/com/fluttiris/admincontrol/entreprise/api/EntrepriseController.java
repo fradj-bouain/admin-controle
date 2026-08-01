@@ -26,7 +26,7 @@ public class EntrepriseController {
     private final CurrentUser currentUser;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<EntrepriseResponse> creer(@Valid @RequestBody CreateEntrepriseRequest request) {
         var entreprise = entrepriseService.creer(request.raisonSociale(), request.siret(), request.adresse(),
             request.adresse2(), request.adresse3(), request.codePostal(), request.ville(), request.paysId(),
@@ -38,14 +38,14 @@ public class EntrepriseController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or "
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
         + "@currentUser.entrepriseId().isEmpty() or @currentUser.entrepriseId().get().equals(#id)")
     public EntrepriseResponse obtenir(@PathVariable UUID id) {
         return EntrepriseResponse.from(entrepriseService.obtenir(id));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or "
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
         + "(@currentUser.entrepriseId().isPresent() and @currentUser.entrepriseId().get().equals(#id))")
     public EntrepriseResponse modifier(@PathVariable UUID id, @Valid @RequestBody CreateEntrepriseRequest request) {
         var entreprise = entrepriseService.modifier(id, request.raisonSociale(), request.siret(), request.adresse(),
@@ -65,30 +65,36 @@ public class EntrepriseController {
         if (currentUser.entrepriseId().isPresent()) {
             return List.of(EntrepriseResponse.from(entrepriseService.obtenir(currentUser.entrepriseId().get())));
         }
+        // Un compte Client est aussi un tenant : uniquement les entreprises affectées
+        // à SES chantiers, jamais le registre complet.
+        if (currentUser.clientId().isPresent()) {
+            return entrepriseService.listerParClient(currentUser.clientId().get()).stream()
+                .map(EntrepriseResponse::from).toList();
+        }
         return entrepriseService.lister().stream().map(EntrepriseResponse::from).toList();
     }
 
     @PostMapping("/{id}/desactiver")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public EntrepriseResponse desactiver(@PathVariable UUID id) {
         return EntrepriseResponse.from(entrepriseService.desactiver(id));
     }
 
     @PostMapping("/{id}/activer")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public EntrepriseResponse activer(@PathVariable UUID id) {
         return EntrepriseResponse.from(entrepriseService.activer(id));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Void> supprimer(@PathVariable UUID id) {
         entrepriseService.supprimer(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}/chantiers")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or "
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
         + "@currentUser.entrepriseId().isEmpty() or @currentUser.entrepriseId().get().equals(#id)")
     public List<AffectationEntrepriseChantierResponse> listerChantiers(@PathVariable UUID id) {
         return affectationEntrepriseChantierService.listerParEntreprise(id).stream()

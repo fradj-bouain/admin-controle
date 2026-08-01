@@ -102,6 +102,29 @@ public class MessagePlanifie {
         return message;
     }
 
+    /**
+     * Notification manuelle envoyée immédiatement depuis la fiche d'un document
+     * (bouton "Notifier par email") — contrairement à {@link #planifier}/{@link
+     * #genererDepuisRegle}, elle est créée déjà au statut ENVOYE (l'email part au
+     * même moment) et porte sourceEntityId pour apparaître dans l'historique des
+     * relances du document/salarié concerné.
+     */
+    public static MessagePlanifie manuelle(UUID expediteurUtilisateurId, UUID sourceEntityId,
+                                            DestinataireType destinataireType, UUID destinataireId,
+                                            String sujet, String contenu) {
+        MessagePlanifie message = new MessagePlanifie();
+        message.sourceEntityId = sourceEntityId;
+        message.expediteurUtilisateurId = expediteurUtilisateurId;
+        message.cibleGroupe = CibleGroupe.SPECIFIQUE;
+        message.destinataireType = destinataireType;
+        message.destinataireId = destinataireId;
+        message.sujet = sujet;
+        message.contenu = contenu;
+        message.dateEnvoiPrevue = Instant.now();
+        message.marquerEnvoye();
+        return message;
+    }
+
     public void marquerEnvoye() {
         this.statut = StatutMessagePlanifie.ENVOYE;
         this.dateEnvoiReelle = Instant.now();

@@ -26,7 +26,7 @@ public class SalarieController {
     private final CurrentUser currentUser;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or "
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
         + "(@currentUser.entrepriseId().isPresent() and @currentUser.entrepriseId().get().equals(#request.entrepriseEmployeurId()))")
     public ResponseEntity<SalarieResponse> creer(@Valid @RequestBody CreateSalarieRequest request) {
         var salarie = salarieService.creer(request.nom(), request.prenom(), request.dateNaissance(),
@@ -36,7 +36,7 @@ public class SalarieController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or "
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
         + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.salarieAppartientAEntreprise(#id, @currentUser.entrepriseId().get()) "
         + "and @currentUser.entrepriseId().get().equals(#request.entrepriseEmployeurId()))")
     public SalarieResponse modifier(@PathVariable UUID id, @Valid @RequestBody CreateSalarieRequest request) {
@@ -47,7 +47,7 @@ public class SalarieController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or @currentUser.entrepriseId().isEmpty() or "
+    @PreAuthorize("hasRole('SUPER_ADMIN') or @currentUser.entrepriseId().isEmpty() or "
         + "@scopeAuthz.salarieAppartientAEntreprise(#id, @currentUser.entrepriseId().get())")
     public SalarieResponse obtenir(@PathVariable UUID id) {
         return SalarieResponse.from(salarieService.obtenir(id));
@@ -59,25 +59,35 @@ public class SalarieController {
         // Un compte Entreprise est toujours ramené à SON propre périmètre, même
         // s'il passe un autre entrepriseId en paramètre.
         UUID scope = currentUser.entrepriseId().orElse(entrepriseId);
-        return salarieService.lister(scope).stream().map(SalarieResponse::from).toList();
+        if (scope != null) {
+            return salarieService.lister(scope).stream().map(SalarieResponse::from).toList();
+        }
+        // Un compte Client est aussi un tenant : uniquement les salariés affectés à
+        // SES chantiers, jamais le registre complet.
+        if (currentUser.clientId().isPresent()) {
+            return salarieService.listerParClient(currentUser.clientId().get()).stream()
+                .map(SalarieResponse::from).toList();
+        }
+        return salarieService.lister(null).stream().map(SalarieResponse::from).toList();
     }
 
     @PostMapping("/{id}/desactiver")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or "
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
         + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.salarieAppartientAEntreprise(#id, @currentUser.entrepriseId().get()))")
     public SalarieResponse desactiver(@PathVariable UUID id) {
         return SalarieResponse.from(salarieService.desactiver(id));
     }
 
     @PostMapping("/{id}/activer")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or "
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
         + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.salarieAppartientAEntreprise(#id, @currentUser.entrepriseId().get()))")
     public SalarieResponse activer(@PathVariable UUID id) {
         return SalarieResponse.from(salarieService.activer(id));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
+        + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.salarieAppartientAEntreprise(#id, @currentUser.entrepriseId().get()))")
     public ResponseEntity<Void> supprimer(@PathVariable UUID id) {
         salarieService.supprimer(id);
         return ResponseEntity.noContent().build();
@@ -87,7 +97,8 @@ public class SalarieController {
     @PreAuthorize("isAuthenticated()")
     public List<AffectationSalarieChantierResponse> listerChantiers(@PathVariable UUID id) {
         return affectationSalarieChantierService.listerParSalarie(id).stream()
-            .map(AffectationSalarieChantierResponse::from)
+            .map(a -> AffectationSalarieChantierResponse.from(a,
+                affectationSalarieChantierService.entrepriseIdDeLAffectation(a.getAffectationEntrepriseChantierId())))
             .toList();
     }
 }

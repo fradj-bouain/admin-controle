@@ -1,6 +1,10 @@
 package com.fluttiris.admincontrol.entreprise.application;
 
+import com.fluttiris.admincontrol.chantier.domain.Chantier;
+import com.fluttiris.admincontrol.chantier.domain.ChantierRepository;
 import com.fluttiris.admincontrol.common.exception.EntityNotFoundException;
+import com.fluttiris.admincontrol.entreprise.domain.AffectationEntrepriseChantier;
+import com.fluttiris.admincontrol.entreprise.domain.AffectationEntrepriseChantierRepository;
 import com.fluttiris.admincontrol.entreprise.domain.Entreprise;
 import com.fluttiris.admincontrol.entreprise.domain.EntrepriseCreeeEvent;
 import com.fluttiris.admincontrol.entreprise.domain.EntrepriseRepository;
@@ -18,6 +22,8 @@ import java.util.UUID;
 public class EntrepriseService {
 
     private final EntrepriseRepository entrepriseRepository;
+    private final ChantierRepository chantierRepository;
+    private final AffectationEntrepriseChantierRepository affectationEntrepriseChantierRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     public Entreprise creer(String raisonSociale, String siret, String adresse, String adresse2, String adresse3,
@@ -55,6 +61,15 @@ public class EntrepriseService {
     @Transactional(readOnly = true)
     public List<Entreprise> lister() {
         return entrepriseRepository.findAll();
+    }
+
+    /** Entreprises affectées à un chantier de ce client, tous rôles confondus (Principale/STT1/STT2). */
+    @Transactional(readOnly = true)
+    public List<Entreprise> listerParClient(UUID clientId) {
+        List<UUID> chantierIds = chantierRepository.findByClientId(clientId).stream().map(Chantier::getId).toList();
+        List<UUID> entrepriseIds = affectationEntrepriseChantierRepository.findByChantierIdIn(chantierIds).stream()
+            .map(AffectationEntrepriseChantier::getEntrepriseId).distinct().toList();
+        return entrepriseRepository.findAllById(entrepriseIds);
     }
 
     public Entreprise desactiver(UUID id) {

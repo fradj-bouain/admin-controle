@@ -33,14 +33,25 @@ public class MessageController {
 
     @GetMapping("/boite-reception")
     @PreAuthorize("isAuthenticated()")
-    public List<MessageResponse> boiteReception(@RequestParam DestinataireType type, @RequestParam UUID destinataireId) {
-        return messageService.boiteReception(type, destinataireId).stream().map(MessageResponse::from).toList();
+    public List<MessageResponse> boiteReception() {
+        // Destinataire toujours dérivé du compte authentifié — jamais accepté en
+        // paramètre, pour ne pas permettre de consulter la boîte de réception
+        // d'un autre utilisateur.
+        return messageService.boiteReception(DestinataireType.UTILISATEUR, currentUser.keycloakId())
+            .stream().map(MessageResponse::from).toList();
     }
 
     @GetMapping("/envoyes")
     @PreAuthorize("isAuthenticated()")
     public List<MessageResponse> envoyes() {
         return messageService.messagesEnvoyes(currentUser.keycloakId()).stream().map(MessageResponse::from).toList();
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public MessageResponse obtenir(@PathVariable UUID id) {
+        boolean estAdmin = currentUser.estAdmin();
+        return MessageResponse.from(messageService.obtenir(id, currentUser.keycloakId(), estAdmin));
     }
 
     @PostMapping("/{id}/marquer-lu")

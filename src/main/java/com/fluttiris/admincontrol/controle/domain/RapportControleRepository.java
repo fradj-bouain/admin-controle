@@ -11,4 +11,6 @@ public interface RapportControleRepository extends JpaRepository<RapportControle
     Optional<RapportControle> findByControleId(UUID controleId);
 
     List<RapportControle> findAllByOrderByCreatedAtDesc();
+
+    List<RapportControle> findByControleIdInOrderByCreatedAtDesc(List<UUID> controleIds);
 }

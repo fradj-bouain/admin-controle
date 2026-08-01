@@ -25,7 +25,7 @@ public class ChantierController {
     private final CurrentUser currentUser;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<ChantierResponse> creer(@Valid @RequestBody CreateChantierRequest request) {
         Chantier chantier = chantierService.creer(
             request.nom(), request.clientId(), request.prestation(), request.adresse(), request.adresse2(),
@@ -35,7 +35,7 @@ public class ChantierController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ChantierResponse modifier(@PathVariable UUID id, @Valid @RequestBody CreateChantierRequest request) {
         Chantier chantier = chantierService.modifier(
             id, request.nom(), request.clientId(), request.prestation(), request.adresse(), request.adresse2(),
@@ -45,14 +45,14 @@ public class ChantierController {
     }
 
     @PutMapping("/{id}/controles")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ChantierResponse definirControles(@PathVariable UUID id, @RequestBody DefinirControlesRequest request) {
         Chantier chantier = chantierService.definirControles(id, request.recurrenceControles(), request.dateProchainControle());
         return ChantierResponse.from(chantier);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or @currentUser.clientId().isEmpty() "
+    @PreAuthorize("hasRole('SUPER_ADMIN') or @currentUser.clientId().isEmpty() "
         + "or @scopeAuthz.chantierAppartientAuClient(#id, @currentUser.clientId().get())")
     public ChantierResponse obtenir(@PathVariable UUID id) {
         return ChantierResponse.from(chantierService.obtenir(id));
@@ -65,38 +65,45 @@ public class ChantierController {
         // passe un autre clientId en paramètre (cf. CurrentUser : le claim n'existe
         // que pour ce type de compte, jamais pour un compte interne).
         UUID scope = currentUser.clientId().orElse(clientId);
-        List<Chantier> chantiers = scope != null
-            ? chantierService.listerParClient(scope)
-            : chantierService.lister();
+        List<Chantier> chantiers;
+        if (scope != null) {
+            chantiers = chantierService.listerParClient(scope);
+        } else if (currentUser.entrepriseId().isPresent()) {
+            // Un compte Entreprise est aussi un tenant : uniquement les chantiers où
+            // elle a une affectation (Principale/STT1/STT2), jamais le registre complet.
+            chantiers = chantierService.listerParEntreprise(currentUser.entrepriseId().get());
+        } else {
+            chantiers = chantierService.lister();
+        }
         return chantiers.stream().map(ChantierResponse::from).toList();
     }
 
     @PostMapping("/{id}/activer")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ChantierResponse activer(@PathVariable UUID id) {
         return ChantierResponse.from(chantierService.activer(id));
     }
 
     @PostMapping("/{id}/desactiver")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ChantierResponse desactiver(@PathVariable UUID id) {
         return ChantierResponse.from(chantierService.desactiver(id));
     }
 
     @PutMapping("/{id}/chef-chantier/{utilisateurId}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ChantierResponse affecterChefChantier(@PathVariable UUID id, @PathVariable UUID utilisateurId) {
         return ChantierResponse.from(chantierService.affecterChefChantier(id, utilisateurId));
     }
 
     @PutMapping("/{id}/salarie-responsable/{salarieId}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ChantierResponse affecterSalarieResponsable(@PathVariable UUID id, @PathVariable UUID salarieId) {
         return ChantierResponse.from(chantierService.affecterSalarieResponsable(id, salarieId));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Void> supprimer(@PathVariable UUID id) {
         chantierService.supprimer(id);
         return ResponseEntity.noContent().build();

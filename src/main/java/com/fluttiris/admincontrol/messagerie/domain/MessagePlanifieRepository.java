@@ -14,4 +14,6 @@ public interface MessagePlanifieRepository extends JpaRepository<MessagePlanifie
     boolean existsByRegleIdAndSourceEntityId(UUID regleId, UUID sourceEntityId);
 
     List<MessagePlanifie> findAllByOrderByCreatedAtDesc();
+
+    List<MessagePlanifie> findBySourceEntityIdInOrderByCreatedAtDesc(List<UUID> sourceEntityIds);
 }

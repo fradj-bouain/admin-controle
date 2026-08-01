@@ -1,6 +1,9 @@
 package com.fluttiris.admincontrol.configuration.application;
 
 import com.fluttiris.admincontrol.common.exception.EntityNotFoundException;
+import com.fluttiris.admincontrol.configuration.domain.ActionCorrective;
+import com.fluttiris.admincontrol.configuration.domain.ActionCorrectiveRepository;
+import com.fluttiris.admincontrol.configuration.domain.CibleActionCorrective;
 import com.fluttiris.admincontrol.configuration.domain.ControleTiers;
 import com.fluttiris.admincontrol.configuration.domain.ControleTiersRepository;
 import com.fluttiris.admincontrol.configuration.domain.CorpsDeMetier;
@@ -31,6 +34,7 @@ public class ReferenceDataService {
     private final TypeContratSalarieRepository typeContratSalarieRepository;
     private final SalarieFonctionRepository salarieFonctionRepository;
     private final ControleTiersRepository controleTiersRepository;
+    private final ActionCorrectiveRepository actionCorrectiveRepository;
 
     public Pays creerPays(String codeIso, String nom, String zone) {
         return paysRepository.save(Pays.creer(codeIso, nom, zone));
@@ -45,6 +49,10 @@ public class ReferenceDataService {
     @Transactional(readOnly = true)
     public List<Pays> listerPays() {
         return paysRepository.findAll();
+    }
+
+    public void supprimerPays(UUID id) {
+        paysRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Pays", id)).supprimer();
     }
 
     public CorpsDeMetier creerCorpsDeMetier(String libelle) {
@@ -63,6 +71,11 @@ public class ReferenceDataService {
         return corpsDeMetierRepository.findAll();
     }
 
+    public void supprimerCorpsDeMetier(UUID id) {
+        corpsDeMetierRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Corps de métier", id)).supprimer();
+    }
+
     public TypeSalarie creerTypeSalarie(String code, String libelle) {
         return typeSalarieRepository.save(TypeSalarie.creer(code, libelle));
     }
@@ -77,6 +90,11 @@ public class ReferenceDataService {
     @Transactional(readOnly = true)
     public List<TypeSalarie> listerTypeSalarie() {
         return typeSalarieRepository.findAll();
+    }
+
+    public void supprimerTypeSalarie(UUID id) {
+        typeSalarieRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Type de salarié", id)).supprimer();
     }
 
     public TypeContratSalarie creerTypeContratSalarie(String code, String libelle) {
@@ -95,6 +113,11 @@ public class ReferenceDataService {
         return typeContratSalarieRepository.findAll();
     }
 
+    public void supprimerTypeContratSalarie(UUID id) {
+        typeContratSalarieRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Type de contrat salarié", id)).supprimer();
+    }
+
     public SalarieFonction creerSalarieFonction(String libelle) {
         return salarieFonctionRepository.save(SalarieFonction.creer(libelle));
     }
@@ -111,6 +134,11 @@ public class ReferenceDataService {
         return salarieFonctionRepository.findAll();
     }
 
+    public void supprimerSalarieFonction(UUID id) {
+        salarieFonctionRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Fonction salarié", id)).supprimer();
+    }
+
     public ControleTiers creerControleTiers(String nom) {
         return controleTiersRepository.save(ControleTiers.creer(nom));
     }
@@ -125,5 +153,31 @@ public class ReferenceDataService {
     @Transactional(readOnly = true)
     public List<ControleTiers> listerControleTiers() {
         return controleTiersRepository.findAll();
+    }
+
+    public void supprimerControleTiers(UUID id) {
+        controleTiersRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Contrôleur tiers", id)).supprimer();
+    }
+
+    public ActionCorrective creerActionCorrective(String nom, CibleActionCorrective cible) {
+        return actionCorrectiveRepository.save(ActionCorrective.creer(nom, cible));
+    }
+
+    public ActionCorrective modifierActionCorrective(UUID id, String nom, CibleActionCorrective cible) {
+        ActionCorrective action = actionCorrectiveRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Action corrective", id));
+        action.modifier(nom, cible);
+        return action;
+    }
+
+    @Transactional(readOnly = true)
+    public List<ActionCorrective> listerActionCorrective() {
+        return actionCorrectiveRepository.findAll();
+    }
+
+    public void supprimerActionCorrective(UUID id) {
+        actionCorrectiveRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Action corrective", id)).supprimer();
     }
 }

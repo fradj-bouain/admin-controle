@@ -58,6 +58,13 @@ public class AffectationSalarieChantierService {
         return affectationSalarieRepository.findBySalarieId(salarieId);
     }
 
+    @Transactional(readOnly = true)
+    public UUID entrepriseIdDeLAffectation(UUID affectationEntrepriseChantierId) {
+        return affectationEntrepriseRepository.findById(affectationEntrepriseChantierId)
+            .map(a -> a.getEntrepriseId())
+            .orElse(null);
+    }
+
     public AffectationSalarieChantier accorderAcces(UUID affectationId) {
         AffectationSalarieChantier affectation = obtenir(affectationId);
         affectation.accorderAcces();

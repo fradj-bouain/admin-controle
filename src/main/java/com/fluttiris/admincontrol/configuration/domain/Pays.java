@@ -7,11 +7,14 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
 @Table(name = "pays")
+@SQLRestriction("deleted_at IS NULL")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Pays {
@@ -27,6 +30,9 @@ public class Pays {
 
     private String zone;
 
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
     public static Pays creer(String codeIso, String nom, String zone) {
         Pays pays = new Pays();
         pays.codeIso = codeIso;
@@ -39,5 +45,9 @@ public class Pays {
         this.codeIso = codeIso;
         this.nom = nom;
         this.zone = zone;
+    }
+
+    public void supprimer() {
+        this.deletedAt = Instant.now();
     }
 }

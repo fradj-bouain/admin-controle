@@ -48,4 +48,8 @@ public class TypeDocumentService {
     public List<TypeDocument> lister() {
         return typeDocumentRepository.findAll();
     }
+
+    public void supprimer(UUID id) {
+        obtenir(id).supprimer();
+    }
 }

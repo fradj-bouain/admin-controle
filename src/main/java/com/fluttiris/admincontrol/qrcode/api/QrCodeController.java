@@ -24,14 +24,14 @@ public class QrCodeController {
     private final QrImageGenerator qrImageGenerator;
 
     @PostMapping("/api/v1/salaries/{salarieId}/qrcode")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<QrCodeResponse> generer(@PathVariable UUID salarieId) {
         QrCode qrCode = qrCodeService.genererPour(salarieId);
         return ResponseEntity.status(HttpStatus.CREATED).body(QrCodeResponse.from(qrCode));
     }
 
     @PostMapping("/api/v1/salaries/{salarieId}/qrcode/regenerer")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public QrCodeResponse regenerer(@PathVariable UUID salarieId) {
         return QrCodeResponse.from(qrCodeService.regenererPour(salarieId));
     }
@@ -43,7 +43,7 @@ public class QrCodeController {
     }
 
     @PostMapping("/api/v1/salaries/{salarieId}/qrcode/desactiver")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public QrCodeResponse desactiver(@PathVariable UUID salarieId) {
         return QrCodeResponse.from(qrCodeService.desactiver(salarieId));
     }

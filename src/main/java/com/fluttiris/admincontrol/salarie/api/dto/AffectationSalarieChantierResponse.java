@@ -11,6 +11,7 @@ public record AffectationSalarieChantierResponse(
     UUID salarieId,
     UUID chantierId,
     UUID affectationEntrepriseChantierId,
+    UUID entrepriseId,
     LocalDate dateDebut,
     LocalDate dateFin,
     StatutAcces statutAcces,
@@ -21,9 +22,9 @@ public record AffectationSalarieChantierResponse(
     boolean badgeEdite,
     boolean present
 ) {
-    public static AffectationSalarieChantierResponse from(AffectationSalarieChantier a) {
+    public static AffectationSalarieChantierResponse from(AffectationSalarieChantier a, UUID entrepriseId) {
         return new AffectationSalarieChantierResponse(a.getId(), a.getSalarieId(), a.getChantierId(),
-            a.getAffectationEntrepriseChantierId(), a.getDateDebut(), a.getDateFin(), a.getStatutAcces(),
+            a.getAffectationEntrepriseChantierId(), entrepriseId, a.getDateDebut(), a.getDateFin(), a.getStatutAcces(),
             a.getMotifRefus(), a.isEpiGants(), a.isEpiCasque(), a.isEpiChaussures(), a.isBadgeEdite(), a.isPresent());
     }
 }

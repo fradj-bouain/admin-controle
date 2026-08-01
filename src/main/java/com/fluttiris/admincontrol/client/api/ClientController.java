@@ -23,7 +23,7 @@ public class ClientController {
     private final CurrentUser currentUser;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<ClientResponse> creer(@Valid @RequestBody CreateClientRequest request) {
         var client = clientService.creer(request.raisonSociale(), request.adresse(), request.adresse2(),
             request.adresse3(), request.codePostal(), request.ville(), request.paysId(), request.telephone(),
@@ -34,7 +34,7 @@ public class ClientController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ClientResponse modifier(@PathVariable UUID id, @Valid @RequestBody CreateClientRequest request) {
         var client = clientService.modifier(id, request.raisonSociale(), request.adresse(), request.adresse2(),
             request.adresse3(), request.codePostal(), request.ville(), request.paysId(), request.telephone(),
@@ -45,7 +45,7 @@ public class ClientController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN') or "
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
         + "@currentUser.clientId().isEmpty() or @currentUser.clientId().get().equals(#id)")
     public ClientResponse obtenir(@PathVariable UUID id) {
         return ClientResponse.from(clientService.obtenir(id));
@@ -63,19 +63,19 @@ public class ClientController {
     }
 
     @PostMapping("/{id}/desactiver")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ClientResponse desactiver(@PathVariable UUID id) {
         return ClientResponse.from(clientService.desactiver(id));
     }
 
     @PostMapping("/{id}/activer")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ClientResponse activer(@PathVariable UUID id) {
         return ClientResponse.from(clientService.activer(id));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Void> supprimer(@PathVariable UUID id) {
         clientService.supprimer(id);
         return ResponseEntity.noContent().build();
