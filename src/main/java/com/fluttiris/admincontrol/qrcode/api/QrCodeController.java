@@ -37,7 +37,10 @@ public class QrCodeController {
     }
 
     @GetMapping("/api/v1/salaries/{salarieId}/qrcode")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
+        + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.salarieAppartientAEntreprise(#salarieId, @currentUser.entrepriseId().get())) or "
+        + "(@currentUser.clientId().isPresent() and @scopeAuthz.salarieAccessibleParClient(#salarieId, @currentUser.clientId().get())) or "
+        + "(@currentUser.entrepriseId().isEmpty() and @currentUser.clientId().isEmpty())")
     public QrCodeResponse obtenir(@PathVariable UUID salarieId) {
         return QrCodeResponse.from(qrCodeService.obtenirPourSalarie(salarieId));
     }
@@ -50,7 +53,10 @@ public class QrCodeController {
 
     /** Image PNG du QR code, prête à être affichée/imprimée sur la carte d'identité numérique. */
     @GetMapping(value = "/api/v1/salaries/{salarieId}/qrcode/image", produces = MediaType.IMAGE_PNG_VALUE)
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
+        + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.salarieAppartientAEntreprise(#salarieId, @currentUser.entrepriseId().get())) or "
+        + "(@currentUser.clientId().isPresent() and @scopeAuthz.salarieAccessibleParClient(#salarieId, @currentUser.clientId().get())) or "
+        + "(@currentUser.entrepriseId().isEmpty() and @currentUser.clientId().isEmpty())")
     public ResponseEntity<byte[]> image(@PathVariable UUID salarieId) {
         QrCode qrCode = qrCodeService.obtenirPourSalarie(salarieId);
         byte[] png = qrImageGenerator.genererPng(qrCode.getCodeValeur());

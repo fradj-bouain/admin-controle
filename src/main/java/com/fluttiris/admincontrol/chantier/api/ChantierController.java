@@ -52,8 +52,10 @@ public class ChantierController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or @currentUser.clientId().isEmpty() "
-        + "or @scopeAuthz.chantierAppartientAuClient(#id, @currentUser.clientId().get())")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
+        + "(@currentUser.clientId().isPresent() and @scopeAuthz.chantierAppartientAuClient(#id, @currentUser.clientId().get())) or "
+        + "(@currentUser.entrepriseId().isPresent() and @chantierAuthz.isAffectedToChantier(#id, @currentUser.entrepriseId().get())) or "
+        + "(@currentUser.clientId().isEmpty() and @currentUser.entrepriseId().isEmpty())")
     public ChantierResponse obtenir(@PathVariable UUID id) {
         return ChantierResponse.from(chantierService.obtenir(id));
     }

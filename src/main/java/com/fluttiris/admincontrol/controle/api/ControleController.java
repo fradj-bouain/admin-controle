@@ -13,6 +13,8 @@ import com.fluttiris.admincontrol.controle.application.ControleService;
 import com.fluttiris.admincontrol.controle.domain.Controle;
 import com.fluttiris.admincontrol.controle.domain.RapportControle;
 import com.fluttiris.admincontrol.common.security.CurrentUser;
+import com.fluttiris.admincontrol.common.security.ScopeAuthorizationService;
+import com.fluttiris.admincontrol.entreprise.application.ChantierAuthorizationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -31,6 +33,8 @@ public class ControleController {
 
     private final ControleService controleService;
     private final CurrentUser currentUser;
+    private final ScopeAuthorizationService scopeAuthz;
+    private final ChantierAuthorizationService chantierAuthz;
 
     @PostMapping
     @PreAuthorize("hasRole('SUPER_ADMIN') or @currentUser.controleTiersId().isPresent()")
@@ -48,6 +52,12 @@ public class ControleController {
     public List<ControleResponse> lister(@RequestParam(required = false) UUID chantierId) {
         List<Controle> controles;
         if (chantierId != null) {
+            // Un chantierId explicite ne doit renvoyer des contrôles que si l'appelant a
+            // réellement accès à ce chantier (sinon un Client/Entreprise pourrait sonder
+            // les contrôles de n'importe quel chantier en devinant son id).
+            if (!chantierAccessible(chantierId)) {
+                return List.of();
+            }
             controles = controleService.listerParChantier(chantierId);
             // Un compte Contrôleur ne voit que les contrôles de SON organisme sur ce chantier.
             if (currentUser.controleTiersId().isPresent()) {
@@ -57,6 +67,13 @@ public class ControleController {
         } else if (currentUser.controleTiersId().isPresent()) {
             // Sans chantier précisé : un compte Contrôleur voit tous les contrôles de SON organisme (dashboard).
             controles = controleService.listerParControleTiers(currentUser.controleTiersId().get());
+        } else if (currentUser.clientId().isPresent()) {
+            // Un compte Client est un tenant : uniquement les contrôles de SES chantiers.
+            controles = controleService.listerParClient(currentUser.clientId().get());
+        } else if (currentUser.entrepriseId().isPresent()) {
+            // Un compte Entreprise est aussi un tenant : uniquement les contrôles des
+            // chantiers où elle a une affectation.
+            controles = controleService.listerParEntreprise(currentUser.entrepriseId().get());
         } else {
             controles = controleService.lister();
         }
@@ -64,7 +81,10 @@ public class ControleController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
+        + "(@currentUser.controleTiersId().isPresent() and @scopeAuthz.controleAppartientAOrganisme(#id, @currentUser.controleTiersId().get())) or "
+        + "(@currentUser.clientId().isPresent() and @scopeAuthz.controleAppartientAuClient(#id, @currentUser.clientId().get())) or "
+        + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.controleAccessibleParEntreprise(#id, @currentUser.entrepriseId().get()))")
     public ControleResponse obtenir(@PathVariable UUID id) {
         return ControleResponse.from(controleService.obtenir(id));
     }
@@ -129,9 +149,19 @@ public class ControleController {
     @GetMapping("/rapports")
     @PreAuthorize("isAuthenticated()")
     public List<RapportControleResponse> listerRapports(@RequestParam(required = false) UUID chantierId) {
-        List<RapportControle> rapports = chantierId != null
-            ? controleService.listerRapportsParChantier(chantierId)
-            : controleService.listerRapports();
+        List<RapportControle> rapports;
+        if (chantierId != null) {
+            if (!chantierAccessible(chantierId)) {
+                return List.of();
+            }
+            rapports = controleService.listerRapportsParChantier(chantierId);
+        } else if (currentUser.clientId().isPresent()) {
+            rapports = controleService.listerRapportsParClient(currentUser.clientId().get());
+        } else if (currentUser.entrepriseId().isPresent()) {
+            rapports = controleService.listerRapportsParEntreprise(currentUser.entrepriseId().get());
+        } else {
+            rapports = controleService.listerRapports();
+        }
         // Un compte Contrôleur ne voit que les rapports issus des contrôles de SON organisme.
         if (currentUser.controleTiersId().isPresent()) {
             rapports = controleService.filtrerRapportsParControleTiers(rapports, currentUser.controleTiersId().get());
@@ -141,7 +171,10 @@ public class ControleController {
     }
 
     @GetMapping("/rapports/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
+        + "(@currentUser.controleTiersId().isPresent() and @scopeAuthz.rapportAppartientAOrganisme(#id, @currentUser.controleTiersId().get())) or "
+        + "(@currentUser.clientId().isPresent() and @scopeAuthz.rapportAppartientAuClient(#id, @currentUser.clientId().get())) or "
+        + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.rapportAccessibleParEntreprise(#id, @currentUser.entrepriseId().get()))")
     public RapportControleResponse obtenirRapport(@PathVariable UUID id) {
         return controleService.toResponse(controleService.obtenirRapport(id));
     }
@@ -172,5 +205,21 @@ public class ControleController {
     public ResponseEntity<Void> renvoyerRapportParEmail(@PathVariable UUID id) {
         controleService.renvoyerRapportParEmail(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Un Client ou une Entreprise ne peuvent lister les contrôles/rapports d'un chantierId
+     * explicite que si ce chantier appartient réellement à leur périmètre. Un Contrôleur ou
+     * un compte interne restent, eux, non restreints à ce niveau (le filtrage par organisme
+     * s'applique séparément, après coup, sur la liste de contrôles/rapports elle-même).
+     */
+    private boolean chantierAccessible(UUID chantierId) {
+        if (currentUser.clientId().isPresent()) {
+            return scopeAuthz.chantierAppartientAuClient(chantierId, currentUser.clientId().get());
+        }
+        if (currentUser.entrepriseId().isPresent()) {
+            return chantierAuthz.isAffectedToChantier(chantierId, currentUser.entrepriseId().get());
+        }
+        return true;
     }
 }

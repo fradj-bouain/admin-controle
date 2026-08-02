@@ -47,8 +47,10 @@ public class SalarieController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or @currentUser.entrepriseId().isEmpty() or "
-        + "@scopeAuthz.salarieAppartientAEntreprise(#id, @currentUser.entrepriseId().get())")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
+        + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.salarieAppartientAEntreprise(#id, @currentUser.entrepriseId().get())) or "
+        + "(@currentUser.clientId().isPresent() and @scopeAuthz.salarieAccessibleParClient(#id, @currentUser.clientId().get())) or "
+        + "(@currentUser.entrepriseId().isEmpty() and @currentUser.clientId().isEmpty())")
     public SalarieResponse obtenir(@PathVariable UUID id) {
         return SalarieResponse.from(salarieService.obtenir(id));
     }
@@ -94,7 +96,10 @@ public class SalarieController {
     }
 
     @GetMapping("/{id}/chantiers")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
+        + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.salarieAppartientAEntreprise(#id, @currentUser.entrepriseId().get())) or "
+        + "(@currentUser.clientId().isPresent() and @scopeAuthz.salarieAccessibleParClient(#id, @currentUser.clientId().get())) or "
+        + "(@currentUser.entrepriseId().isEmpty() and @currentUser.clientId().isEmpty())")
     public List<AffectationSalarieChantierResponse> listerChantiers(@PathVariable UUID id) {
         return affectationSalarieChantierService.listerParSalarie(id).stream()
             .map(a -> AffectationSalarieChantierResponse.from(a,

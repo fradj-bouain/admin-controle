@@ -45,14 +45,23 @@ public class DocumentController {
         // Un compte Entreprise ne peut consulter que ses propres documents ou ceux
         // de ses propres salariés — jamais ceux d'une autre entreprise.
         boolean estEntrepriseScope = currentUser.entrepriseId().isPresent();
+        // Un compte Client ne peut consulter que les documents des salariés/entreprises
+        // affectés à SES chantiers — jamais ceux d'une entité hors de son périmètre.
+        boolean estClientScope = currentUser.clientId().isPresent();
         if (salarieId != null) {
             if (estEntrepriseScope && !scopeAuthz.salarieAppartientAEntreprise(salarieId, currentUser.entrepriseId().get())) {
+                return List.of();
+            }
+            if (estClientScope && !scopeAuthz.salarieAccessibleParClient(salarieId, currentUser.clientId().get())) {
                 return List.of();
             }
             return documentService.listerParSalarie(salarieId).stream().map(DocumentResponse::from).toList();
         }
         UUID scope = estEntrepriseScope ? currentUser.entrepriseId().get() : entrepriseId;
         if (scope != null) {
+            if (estClientScope && !scopeAuthz.entrepriseAccessibleParClient(scope, currentUser.clientId().get())) {
+                return List.of();
+            }
             return documentService.listerParEntreprise(scope).stream().map(DocumentResponse::from).toList();
         }
         return List.of();

@@ -14,6 +14,8 @@ import com.fluttiris.admincontrol.controle.domain.ControleSalarie;
 import com.fluttiris.admincontrol.controle.domain.ControleSalarieRepository;
 import com.fluttiris.admincontrol.controle.domain.RapportControle;
 import com.fluttiris.admincontrol.controle.domain.RapportControleRepository;
+import com.fluttiris.admincontrol.entreprise.domain.AffectationEntrepriseChantier;
+import com.fluttiris.admincontrol.entreprise.domain.AffectationEntrepriseChantierRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -36,6 +38,7 @@ public class ControleService {
     private final ControleSalarieRepository controleSalarieRepository;
     private final ChantierRepository chantierRepository;
     private final ClientRepository clientRepository;
+    private final AffectationEntrepriseChantierRepository affectationEntrepriseChantierRepository;
     private final EmailService emailService;
 
     @Value("${app.frontend-base-url}")
@@ -67,6 +70,21 @@ public class ControleService {
     @Transactional(readOnly = true)
     public List<Controle> listerParControleTiers(UUID controleTiersId) {
         return controleRepository.findByControleTiersId(controleTiersId);
+    }
+
+    /** Contrôles des chantiers de ce client. */
+    @Transactional(readOnly = true)
+    public List<Controle> listerParClient(UUID clientId) {
+        List<UUID> chantierIds = chantierRepository.findByClientId(clientId).stream().map(Chantier::getId).toList();
+        return chantierIds.isEmpty() ? List.of() : controleRepository.findByChantierIdIn(chantierIds);
+    }
+
+    /** Contrôles des chantiers où cette entreprise a une affectation. */
+    @Transactional(readOnly = true)
+    public List<Controle> listerParEntreprise(UUID entrepriseId) {
+        List<UUID> chantierIds = affectationEntrepriseChantierRepository.findByEntrepriseId(entrepriseId).stream()
+            .map(AffectationEntrepriseChantier::getChantierId).distinct().toList();
+        return chantierIds.isEmpty() ? List.of() : controleRepository.findByChantierIdIn(chantierIds);
     }
 
     public Controle modifier(UUID id, LocalDate dateControle, String remarques, UUID controleTiersId,
@@ -154,6 +172,20 @@ public class ControleService {
     @Transactional(readOnly = true)
     public List<RapportControle> listerRapportsParChantier(UUID chantierId) {
         List<UUID> controleIds = controleRepository.findByChantierId(chantierId).stream().map(Controle::getId).toList();
+        return controleIds.isEmpty() ? List.of() : rapportControleRepository.findByControleIdInOrderByCreatedAtDesc(controleIds);
+    }
+
+    /** Rapports issus des contrôles des chantiers de ce client. */
+    @Transactional(readOnly = true)
+    public List<RapportControle> listerRapportsParClient(UUID clientId) {
+        List<UUID> controleIds = listerParClient(clientId).stream().map(Controle::getId).toList();
+        return controleIds.isEmpty() ? List.of() : rapportControleRepository.findByControleIdInOrderByCreatedAtDesc(controleIds);
+    }
+
+    /** Rapports issus des contrôles des chantiers où cette entreprise a une affectation. */
+    @Transactional(readOnly = true)
+    public List<RapportControle> listerRapportsParEntreprise(UUID entrepriseId) {
+        List<UUID> controleIds = listerParEntreprise(entrepriseId).stream().map(Controle::getId).toList();
         return controleIds.isEmpty() ? List.of() : rapportControleRepository.findByControleIdInOrderByCreatedAtDesc(controleIds);
     }
 
