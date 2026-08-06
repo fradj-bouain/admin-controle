@@ -39,7 +39,9 @@ public class EntrepriseController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN') or "
-        + "@currentUser.entrepriseId().isEmpty() or @currentUser.entrepriseId().get().equals(#id)")
+        + "(@currentUser.entrepriseId().isPresent() and @currentUser.entrepriseId().get().equals(#id)) or "
+        + "(@currentUser.clientId().isPresent() and @scopeAuthz.entrepriseAccessibleParClient(#id, @currentUser.clientId().get(), @currentUser.keycloakId())) or "
+        + "(@currentUser.entrepriseId().isEmpty() and @currentUser.clientId().isEmpty())")
     public EntrepriseResponse obtenir(@PathVariable UUID id) {
         return EntrepriseResponse.from(entrepriseService.obtenir(id));
     }
@@ -65,10 +67,11 @@ public class EntrepriseController {
         if (currentUser.entrepriseId().isPresent()) {
             return List.of(EntrepriseResponse.from(entrepriseService.obtenir(currentUser.entrepriseId().get())));
         }
-        // Un compte Client est aussi un tenant : uniquement les entreprises affectées
-        // à SES chantiers, jamais le registre complet.
+        // Un compte Client est aussi un tenant : uniquement les entreprises affectées aux
+        // chantiers qui lui ont été explicitement assignés, jamais le registre complet —
+        // aucun chantier assigné = aucune entreprise visible.
         if (currentUser.clientId().isPresent()) {
-            return entrepriseService.listerParClient(currentUser.clientId().get()).stream()
+            return entrepriseService.listerParClient(currentUser.clientId().get(), currentUser.keycloakId()).stream()
                 .map(EntrepriseResponse::from).toList();
         }
         return entrepriseService.lister().stream().map(EntrepriseResponse::from).toList();
@@ -95,7 +98,8 @@ public class EntrepriseController {
 
     @GetMapping("/{id}/chantiers")
     @PreAuthorize("hasRole('SUPER_ADMIN') or "
-        + "@currentUser.entrepriseId().isEmpty() or @currentUser.entrepriseId().get().equals(#id)")
+        + "(@currentUser.entrepriseId().isPresent() and @currentUser.entrepriseId().get().equals(#id)) or "
+        + "@currentUser.entrepriseId().isEmpty()")
     public List<AffectationEntrepriseChantierResponse> listerChantiers(@PathVariable UUID id) {
         return affectationEntrepriseChantierService.listerParEntreprise(id).stream()
             .map(AffectationEntrepriseChantierResponse::from)

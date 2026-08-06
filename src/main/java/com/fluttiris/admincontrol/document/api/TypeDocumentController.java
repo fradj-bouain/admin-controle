@@ -24,7 +24,7 @@ public class TypeDocumentController {
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<TypeDocumentResponse> creer(@Valid @RequestBody CreateTypeDocumentRequest request) {
         var type = typeDocumentService.creer(request.libelle(), request.cible(), request.obligatoire(),
-            request.format(), request.corpsDeMetierId(), request.paysId(), request.dateDebutValiditeRequise(),
+            request.format(), request.corpsDeMetierId(), request.paysId(), request.zoneRequise(), request.dateDebutValiditeRequise(),
             request.dateFinValiditeRequise(), request.nbJoursRelanceAvant(), request.nbJoursRecurrence(),
             request.retireAccordAcces());
         return ResponseEntity.status(HttpStatus.CREATED).body(TypeDocumentResponse.from(type));
@@ -46,7 +46,7 @@ public class TypeDocumentController {
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public TypeDocumentResponse modifier(@PathVariable UUID id, @Valid @RequestBody CreateTypeDocumentRequest request) {
         var type = typeDocumentService.modifier(id, request.libelle(), request.cible(), request.obligatoire(),
-            request.format(), request.corpsDeMetierId(), request.paysId(), request.dateDebutValiditeRequise(),
+            request.format(), request.corpsDeMetierId(), request.paysId(), request.zoneRequise(), request.dateDebutValiditeRequise(),
             request.dateFinValiditeRequise(), request.nbJoursRelanceAvant(), request.nbJoursRecurrence(),
             request.retireAccordAcces());
         return TypeDocumentResponse.from(type);

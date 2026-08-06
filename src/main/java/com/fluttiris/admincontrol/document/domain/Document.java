@@ -79,9 +79,16 @@ public class Document extends Auditable {
         return document;
     }
 
-    public void valider() {
+    /**
+     * Les dates de validité sont saisies ici, par l'administrateur qui valide — jamais par
+     * l'entreprise au dépôt (voir {@link #creer}) — pour attester que le contrôle manuel du
+     * document (et non simplement son dépôt) a bien été réalisé par l'administration.
+     */
+    public void valider(LocalDate dateDebutValidite, LocalDate dateExpiration) {
         this.statutValidation = StatutValidation.VALIDE;
         this.documentEtatId = null;
+        this.dateDebutValidite = dateDebutValidite;
+        this.dateExpiration = dateExpiration;
     }
 
     public void refuser(UUID documentEtatId) {

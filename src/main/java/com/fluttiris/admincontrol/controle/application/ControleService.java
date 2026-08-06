@@ -1,5 +1,6 @@
 package com.fluttiris.admincontrol.controle.application;
 
+import com.fluttiris.admincontrol.chantier.application.ChantierService;
 import com.fluttiris.admincontrol.chantier.domain.Chantier;
 import com.fluttiris.admincontrol.chantier.domain.ChantierRepository;
 import com.fluttiris.admincontrol.client.domain.Client;
@@ -37,6 +38,7 @@ public class ControleService {
     private final RapportControleRepository rapportControleRepository;
     private final ControleSalarieRepository controleSalarieRepository;
     private final ChantierRepository chantierRepository;
+    private final ChantierService chantierService;
     private final ClientRepository clientRepository;
     private final AffectationEntrepriseChantierRepository affectationEntrepriseChantierRepository;
     private final EmailService emailService;
@@ -72,10 +74,11 @@ public class ControleService {
         return controleRepository.findByControleTiersId(controleTiersId);
     }
 
-    /** Contrôles des chantiers de ce client. */
+    /** Contrôles des chantiers accessibles par ce client (tous ses chantiers, ou seulement
+        ceux assignés à cet utilisateur — voir ChantierService). */
     @Transactional(readOnly = true)
-    public List<Controle> listerParClient(UUID clientId) {
-        List<UUID> chantierIds = chantierRepository.findByClientId(clientId).stream().map(Chantier::getId).toList();
+    public List<Controle> listerParClient(UUID clientId, UUID utilisateurId) {
+        List<UUID> chantierIds = chantierService.listerIdsAccessiblesPourClient(clientId, utilisateurId);
         return chantierIds.isEmpty() ? List.of() : controleRepository.findByChantierIdIn(chantierIds);
     }
 
@@ -175,10 +178,10 @@ public class ControleService {
         return controleIds.isEmpty() ? List.of() : rapportControleRepository.findByControleIdInOrderByCreatedAtDesc(controleIds);
     }
 
-    /** Rapports issus des contrôles des chantiers de ce client. */
+    /** Rapports issus des contrôles des chantiers accessibles par ce client. */
     @Transactional(readOnly = true)
-    public List<RapportControle> listerRapportsParClient(UUID clientId) {
-        List<UUID> controleIds = listerParClient(clientId).stream().map(Controle::getId).toList();
+    public List<RapportControle> listerRapportsParClient(UUID clientId, UUID utilisateurId) {
+        List<UUID> controleIds = listerParClient(clientId, utilisateurId).stream().map(Controle::getId).toList();
         return controleIds.isEmpty() ? List.of() : rapportControleRepository.findByControleIdInOrderByCreatedAtDesc(controleIds);
     }
 

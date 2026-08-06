@@ -53,7 +53,7 @@ public class ChantierController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN') or "
-        + "(@currentUser.clientId().isPresent() and @scopeAuthz.chantierAppartientAuClient(#id, @currentUser.clientId().get())) or "
+        + "(@currentUser.clientId().isPresent() and @scopeAuthz.chantierAccessibleParClient(#id, @currentUser.clientId().get(), @currentUser.keycloakId())) or "
         + "(@currentUser.entrepriseId().isPresent() and @chantierAuthz.isAffectedToChantier(#id, @currentUser.entrepriseId().get())) or "
         + "(@currentUser.clientId().isEmpty() and @currentUser.entrepriseId().isEmpty())")
     public ChantierResponse obtenir(@PathVariable UUID id) {
@@ -68,7 +68,13 @@ public class ChantierController {
         // que pour ce type de compte, jamais pour un compte interne).
         UUID scope = currentUser.clientId().orElse(clientId);
         List<Chantier> chantiers;
-        if (scope != null) {
+        if (currentUser.clientId().isPresent()) {
+            // Un compte Client ne voit QUE les chantiers qui lui ont été explicitement
+            // assignés (voir chantier_utilisateur / ChantierUtilisateurController). Sans
+            // aucune assignation, il ne voit aucun chantier : l'accès est strictement
+            // opt-in, jamais accordé par défaut.
+            chantiers = chantierService.listerAccessiblesPourClient(currentUser.clientId().get(), currentUser.keycloakId());
+        } else if (scope != null) {
             chantiers = chantierService.listerParClient(scope);
         } else if (currentUser.entrepriseId().isPresent()) {
             // Un compte Entreprise est aussi un tenant : uniquement les chantiers où

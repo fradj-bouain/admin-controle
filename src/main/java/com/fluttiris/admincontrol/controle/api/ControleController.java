@@ -68,8 +68,9 @@ public class ControleController {
             // Sans chantier précisé : un compte Contrôleur voit tous les contrôles de SON organisme (dashboard).
             controles = controleService.listerParControleTiers(currentUser.controleTiersId().get());
         } else if (currentUser.clientId().isPresent()) {
-            // Un compte Client est un tenant : uniquement les contrôles de SES chantiers.
-            controles = controleService.listerParClient(currentUser.clientId().get());
+            // Un compte Client est un tenant : uniquement les contrôles des chantiers qui
+            // lui ont été explicitement assignés — aucun chantier assigné = aucun contrôle visible.
+            controles = controleService.listerParClient(currentUser.clientId().get(), currentUser.keycloakId());
         } else if (currentUser.entrepriseId().isPresent()) {
             // Un compte Entreprise est aussi un tenant : uniquement les contrôles des
             // chantiers où elle a une affectation.
@@ -83,7 +84,7 @@ public class ControleController {
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN') or "
         + "(@currentUser.controleTiersId().isPresent() and @scopeAuthz.controleAppartientAOrganisme(#id, @currentUser.controleTiersId().get())) or "
-        + "(@currentUser.clientId().isPresent() and @scopeAuthz.controleAppartientAuClient(#id, @currentUser.clientId().get())) or "
+        + "(@currentUser.clientId().isPresent() and @scopeAuthz.controleAppartientAuClient(#id, @currentUser.clientId().get(), @currentUser.keycloakId())) or "
         + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.controleAccessibleParEntreprise(#id, @currentUser.entrepriseId().get()))")
     public ControleResponse obtenir(@PathVariable UUID id) {
         return ControleResponse.from(controleService.obtenir(id));
@@ -156,7 +157,7 @@ public class ControleController {
             }
             rapports = controleService.listerRapportsParChantier(chantierId);
         } else if (currentUser.clientId().isPresent()) {
-            rapports = controleService.listerRapportsParClient(currentUser.clientId().get());
+            rapports = controleService.listerRapportsParClient(currentUser.clientId().get(), currentUser.keycloakId());
         } else if (currentUser.entrepriseId().isPresent()) {
             rapports = controleService.listerRapportsParEntreprise(currentUser.entrepriseId().get());
         } else {
@@ -173,7 +174,7 @@ public class ControleController {
     @GetMapping("/rapports/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN') or "
         + "(@currentUser.controleTiersId().isPresent() and @scopeAuthz.rapportAppartientAOrganisme(#id, @currentUser.controleTiersId().get())) or "
-        + "(@currentUser.clientId().isPresent() and @scopeAuthz.rapportAppartientAuClient(#id, @currentUser.clientId().get())) or "
+        + "(@currentUser.clientId().isPresent() and @scopeAuthz.rapportAppartientAuClient(#id, @currentUser.clientId().get(), @currentUser.keycloakId())) or "
         + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.rapportAccessibleParEntreprise(#id, @currentUser.entrepriseId().get()))")
     public RapportControleResponse obtenirRapport(@PathVariable UUID id) {
         return controleService.toResponse(controleService.obtenirRapport(id));
@@ -209,13 +210,15 @@ public class ControleController {
 
     /**
      * Un Client ou une Entreprise ne peuvent lister les contrôles/rapports d'un chantierId
-     * explicite que si ce chantier appartient réellement à leur périmètre. Un Contrôleur ou
-     * un compte interne restent, eux, non restreints à ce niveau (le filtrage par organisme
-     * s'applique séparément, après coup, sur la liste de contrôles/rapports elle-même).
+     * explicite que si ce chantier appartient réellement à leur périmètre (pour un Client,
+     * en tenant compte d'une éventuelle restriction à certains chantiers précis — voir
+     * ChantierService.listerAccessiblesPourClient). Un Contrôleur ou un compte interne
+     * restent, eux, non restreints à ce niveau (le filtrage par organisme s'applique
+     * séparément, après coup, sur la liste de contrôles/rapports elle-même).
      */
     private boolean chantierAccessible(UUID chantierId) {
         if (currentUser.clientId().isPresent()) {
-            return scopeAuthz.chantierAppartientAuClient(chantierId, currentUser.clientId().get());
+            return scopeAuthz.chantierAccessibleParClient(chantierId, currentUser.clientId().get(), currentUser.keycloakId());
         }
         if (currentUser.entrepriseId().isPresent()) {
             return chantierAuthz.isAffectedToChantier(chantierId, currentUser.entrepriseId().get());

@@ -1,7 +1,6 @@
 package com.fluttiris.admincontrol.entreprise.application;
 
-import com.fluttiris.admincontrol.chantier.domain.Chantier;
-import com.fluttiris.admincontrol.chantier.domain.ChantierRepository;
+import com.fluttiris.admincontrol.chantier.application.ChantierService;
 import com.fluttiris.admincontrol.common.exception.EntityNotFoundException;
 import com.fluttiris.admincontrol.entreprise.domain.AffectationEntrepriseChantier;
 import com.fluttiris.admincontrol.entreprise.domain.AffectationEntrepriseChantierRepository;
@@ -22,7 +21,7 @@ import java.util.UUID;
 public class EntrepriseService {
 
     private final EntrepriseRepository entrepriseRepository;
-    private final ChantierRepository chantierRepository;
+    private final ChantierService chantierService;
     private final AffectationEntrepriseChantierRepository affectationEntrepriseChantierRepository;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -63,10 +62,15 @@ public class EntrepriseService {
         return entrepriseRepository.findAll();
     }
 
-    /** Entreprises affectées à un chantier de ce client, tous rôles confondus (Principale/STT1/STT2). */
+    /** Entreprises affectées à un chantier accessible par ce client (tous ses chantiers, ou
+        seulement ceux assignés à cet utilisateur — voir ChantierService), tous rôles
+        d'entreprise confondus (Principale/STT1/STT2). */
     @Transactional(readOnly = true)
-    public List<Entreprise> listerParClient(UUID clientId) {
-        List<UUID> chantierIds = chantierRepository.findByClientId(clientId).stream().map(Chantier::getId).toList();
+    public List<Entreprise> listerParClient(UUID clientId, UUID utilisateurId) {
+        List<UUID> chantierIds = chantierService.listerIdsAccessiblesPourClient(clientId, utilisateurId);
+        if (chantierIds.isEmpty()) {
+            return List.of();
+        }
         List<UUID> entrepriseIds = affectationEntrepriseChantierRepository.findByChantierIdIn(chantierIds).stream()
             .map(AffectationEntrepriseChantier::getEntrepriseId).distinct().toList();
         return entrepriseRepository.findAllById(entrepriseIds);

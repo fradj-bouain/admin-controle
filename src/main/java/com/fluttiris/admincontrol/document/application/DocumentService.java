@@ -2,6 +2,7 @@ package com.fluttiris.admincontrol.document.application;
 
 import com.fluttiris.admincontrol.common.audit.HistoriqueModificationResponse;
 import com.fluttiris.admincontrol.common.audit.HistoriqueModificationService;
+import com.fluttiris.admincontrol.common.exception.BusinessRuleViolationException;
 import com.fluttiris.admincontrol.common.exception.EntityNotFoundException;
 import com.fluttiris.admincontrol.common.mail.EmailService;
 import com.fluttiris.admincontrol.common.security.CurrentUser;
@@ -72,10 +73,18 @@ public class DocumentService {
         return documentRepository.findByEntrepriseId(entrepriseId);
     }
 
-    public Document valider(UUID id) {
+    public Document valider(UUID id, LocalDate dateDebutValidite, LocalDate dateExpiration) {
         Document document = obtenir(id);
+        typeDocumentRepository.findById(document.getTypeDocumentId()).ifPresent(type -> {
+            if (type.isDateDebutValiditeRequise() && dateDebutValidite == null) {
+                throw new BusinessRuleViolationException("La date de début de validité est obligatoire pour valider ce document");
+            }
+            if (type.isDateFinValiditeRequise() && dateExpiration == null) {
+                throw new BusinessRuleViolationException("La date de fin de validité est obligatoire pour valider ce document");
+            }
+        });
         String ancienStatut = document.getStatutValidation().name();
-        document.valider();
+        document.valider(dateDebutValidite, dateExpiration);
         Map<String, Object> details = new HashMap<>();
         details.put("typeDocumentLibelle", libelleType(document.getTypeDocumentId()));
         details.put("ancienStatut", ancienStatut);

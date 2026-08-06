@@ -51,6 +51,15 @@ public class TypeDocument {
     @Column(name = "pays_id")
     private UUID paysId;
 
+    /**
+     * Zone de pays ciblée (mêmes valeurs que {@code Pays.zone} : FRANCE/UE/HORS_UE),
+     * évaluée contre la zone du pays de nationalité du salarié — complémentaire à
+     * {@link #paysId} (un pays précis) pour cibler un groupe de pays entier sans les
+     * lister un par un (ex : Titre de séjour obligatoire pour tout salarié Hors UE).
+     */
+    @Column(name = "zone_requise")
+    private String zoneRequise;
+
     /** Ce type de document exige-t-il une date de début de validité ? (ex: DPAE = non, carte pro = oui) */
     @Column(name = "date_debut_validite_requise", nullable = false)
     private boolean dateDebutValiditeRequise = true;
@@ -72,7 +81,7 @@ public class TypeDocument {
     private Instant deletedAt;
 
     public static TypeDocument creer(String libelle, CibleDocument cible, boolean obligatoire, FormatDocument format,
-                                      UUID corpsDeMetierId, UUID paysId, boolean dateDebutValiditeRequise,
+                                      UUID corpsDeMetierId, UUID paysId, String zoneRequise, boolean dateDebutValiditeRequise,
                                       boolean dateFinValiditeRequise, int nbJoursRelanceAvant,
                                       int nbJoursRecurrence, boolean retireAccordAcces) {
         TypeDocument type = new TypeDocument();
@@ -82,6 +91,7 @@ public class TypeDocument {
         type.format = format;
         type.corpsDeMetierId = corpsDeMetierId;
         type.paysId = paysId;
+        type.zoneRequise = zoneRequise;
         type.dateDebutValiditeRequise = dateDebutValiditeRequise;
         type.dateFinValiditeRequise = dateFinValiditeRequise;
         type.nbJoursRelanceAvant = nbJoursRelanceAvant;
@@ -91,7 +101,7 @@ public class TypeDocument {
     }
 
     public void modifier(String libelle, CibleDocument cible, boolean obligatoire, FormatDocument format,
-                          UUID corpsDeMetierId, UUID paysId, boolean dateDebutValiditeRequise,
+                          UUID corpsDeMetierId, UUID paysId, String zoneRequise, boolean dateDebutValiditeRequise,
                           boolean dateFinValiditeRequise, int nbJoursRelanceAvant,
                           int nbJoursRecurrence, boolean retireAccordAcces) {
         this.libelle = libelle;
@@ -100,6 +110,7 @@ public class TypeDocument {
         this.format = format;
         this.corpsDeMetierId = corpsDeMetierId;
         this.paysId = paysId;
+        this.zoneRequise = zoneRequise;
         this.dateDebutValiditeRequise = dateDebutValiditeRequise;
         this.dateFinValiditeRequise = dateFinValiditeRequise;
         this.nbJoursRelanceAvant = nbJoursRelanceAvant;

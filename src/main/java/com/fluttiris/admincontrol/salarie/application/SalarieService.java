@@ -1,7 +1,6 @@
 package com.fluttiris.admincontrol.salarie.application;
 
-import com.fluttiris.admincontrol.chantier.domain.Chantier;
-import com.fluttiris.admincontrol.chantier.domain.ChantierRepository;
+import com.fluttiris.admincontrol.chantier.application.ChantierService;
 import com.fluttiris.admincontrol.common.exception.EntityNotFoundException;
 import com.fluttiris.admincontrol.salarie.domain.AffectationSalarieChantier;
 import com.fluttiris.admincontrol.salarie.domain.AffectationSalarieChantierRepository;
@@ -23,7 +22,7 @@ import java.util.UUID;
 public class SalarieService {
 
     private final SalarieRepository salarieRepository;
-    private final ChantierRepository chantierRepository;
+    private final ChantierService chantierService;
     private final AffectationSalarieChantierRepository affectationSalarieChantierRepository;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -57,10 +56,15 @@ public class SalarieService {
             : salarieRepository.findAll();
     }
 
-    /** Salariés affectés à un chantier de ce client, via leurs affectations chantier. */
+    /** Salariés affectés à un chantier accessible par ce client (tous ses chantiers, ou
+        seulement ceux assignés à cet utilisateur — voir ChantierService), via leurs
+        affectations chantier. */
     @Transactional(readOnly = true)
-    public List<Salarie> listerParClient(UUID clientId) {
-        List<UUID> chantierIds = chantierRepository.findByClientId(clientId).stream().map(Chantier::getId).toList();
+    public List<Salarie> listerParClient(UUID clientId, UUID utilisateurId) {
+        List<UUID> chantierIds = chantierService.listerIdsAccessiblesPourClient(clientId, utilisateurId);
+        if (chantierIds.isEmpty()) {
+            return List.of();
+        }
         List<UUID> salarieIds = affectationSalarieChantierRepository.findByChantierIdIn(chantierIds).stream()
             .map(AffectationSalarieChantier::getSalarieId).distinct().toList();
         return salarieRepository.findAllById(salarieIds);

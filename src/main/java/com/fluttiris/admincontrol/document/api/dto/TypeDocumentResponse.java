@@ -14,6 +14,7 @@ public record TypeDocumentResponse(
     FormatDocument format,
     UUID corpsDeMetierId,
     UUID paysId,
+    String zoneRequise,
     boolean dateDebutValiditeRequise,
     boolean dateFinValiditeRequise,
     int nbJoursRelanceAvant,
@@ -22,7 +23,7 @@ public record TypeDocumentResponse(
 ) {
     public static TypeDocumentResponse from(TypeDocument t) {
         return new TypeDocumentResponse(t.getId(), t.getLibelle(), t.getCible(), t.isObligatoire(),
-            t.getFormat(), t.getCorpsDeMetierId(), t.getPaysId(), t.isDateDebutValiditeRequise(),
+            t.getFormat(), t.getCorpsDeMetierId(), t.getPaysId(), t.getZoneRequise(), t.isDateDebutValiditeRequise(),
             t.isDateFinValiditeRequise(), t.getNbJoursRelanceAvant(), t.getNbJoursRecurrence(),
             t.isRetireAccordAcces());
     }

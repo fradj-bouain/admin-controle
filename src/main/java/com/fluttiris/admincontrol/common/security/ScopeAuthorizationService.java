@@ -3,6 +3,8 @@ package com.fluttiris.admincontrol.common.security;
 import com.fluttiris.admincontrol.auth.domain.UtilisateurRepository;
 import com.fluttiris.admincontrol.chantier.domain.Chantier;
 import com.fluttiris.admincontrol.chantier.domain.ChantierRepository;
+import com.fluttiris.admincontrol.chantier.domain.ChantierUtilisateur;
+import com.fluttiris.admincontrol.chantier.domain.ChantierUtilisateurRepository;
 import com.fluttiris.admincontrol.controle.domain.ControleRepository;
 import com.fluttiris.admincontrol.controle.domain.RapportControleRepository;
 import com.fluttiris.admincontrol.entreprise.domain.AffectationEntrepriseChantierRepository;
@@ -27,18 +29,13 @@ import java.util.UUID;
 public class ScopeAuthorizationService {
 
     private final ChantierRepository chantierRepository;
+    private final ChantierUtilisateurRepository chantierUtilisateurRepository;
     private final ControleRepository controleRepository;
     private final RapportControleRepository rapportControleRepository;
     private final SalarieRepository salarieRepository;
     private final UtilisateurRepository utilisateurRepository;
     private final AffectationSalarieChantierRepository affectationSalarieChantierRepository;
     private final AffectationEntrepriseChantierRepository affectationEntrepriseChantierRepository;
-
-    public boolean chantierAppartientAuClient(UUID chantierId, UUID clientId) {
-        return chantierRepository.findById(chantierId)
-            .map(c -> clientId.equals(c.getClientId()))
-            .orElse(false);
-    }
 
     public boolean controleAppartientAOrganisme(UUID controleId, UUID controleTiersId) {
         return controleRepository.findById(controleId)
@@ -64,9 +61,24 @@ public class ScopeAuthorizationService {
             .orElse(false);
     }
 
-    /** Le salarié est affecté à au moins un chantier de ce client (via ses affectations chantier). */
-    public boolean salarieAccessibleParClient(UUID salarieId, UUID clientId) {
-        List<UUID> chantierIds = chantierIdsDuClient(clientId);
+    /**
+     * Le chantier appartient à ce client ET a été explicitement assigné à ce compte Client
+     * via chantier_utilisateur. Sans assignation explicite, un compte Client n'a accès à
+     * aucun chantier — l'accès est strictement opt-in, jamais accordé par défaut.
+     */
+    public boolean chantierAccessibleParClient(UUID chantierId, UUID clientId, UUID utilisateurId) {
+        boolean appartientAuClient = chantierRepository.findById(chantierId)
+            .map(c -> clientId.equals(c.getClientId()))
+            .orElse(false);
+        if (!appartientAuClient) {
+            return false;
+        }
+        return chantierIdsAssignes(utilisateurId).contains(chantierId);
+    }
+
+    /** Le salarié est affecté à au moins un chantier accessible par ce compte Client. */
+    public boolean salarieAccessibleParClient(UUID salarieId, UUID clientId, UUID utilisateurId) {
+        List<UUID> chantierIds = chantierIdsAccessiblesPourClient(clientId, utilisateurId);
         if (chantierIds.isEmpty()) {
             return false;
         }
@@ -74,9 +86,9 @@ public class ScopeAuthorizationService {
             .anyMatch(a -> chantierIds.contains(a.getChantierId()));
     }
 
-    /** L'entreprise a une affectation sur au moins un chantier de ce client. */
-    public boolean entrepriseAccessibleParClient(UUID entrepriseId, UUID clientId) {
-        List<UUID> chantierIds = chantierIdsDuClient(clientId);
+    /** L'entreprise a une affectation sur au moins un chantier accessible par ce compte Client. */
+    public boolean entrepriseAccessibleParClient(UUID entrepriseId, UUID clientId, UUID utilisateurId) {
+        List<UUID> chantierIds = chantierIdsAccessiblesPourClient(clientId, utilisateurId);
         if (chantierIds.isEmpty()) {
             return false;
         }
@@ -84,11 +96,9 @@ public class ScopeAuthorizationService {
             .anyMatch(a -> chantierIds.contains(a.getChantierId()));
     }
 
-    public boolean controleAppartientAuClient(UUID controleId, UUID clientId) {
+    public boolean controleAppartientAuClient(UUID controleId, UUID clientId, UUID utilisateurId) {
         return controleRepository.findById(controleId)
-            .map(c -> chantierRepository.findById(c.getChantierId())
-                .map(chantier -> clientId.equals(chantier.getClientId()))
-                .orElse(false))
+            .map(c -> chantierAccessibleParClient(c.getChantierId(), clientId, utilisateurId))
             .orElse(false);
     }
 
@@ -100,9 +110,9 @@ public class ScopeAuthorizationService {
             .orElse(false);
     }
 
-    public boolean rapportAppartientAuClient(UUID rapportId, UUID clientId) {
+    public boolean rapportAppartientAuClient(UUID rapportId, UUID clientId, UUID utilisateurId) {
         return rapportControleRepository.findById(rapportId)
-            .map(r -> controleAppartientAuClient(r.getControleId(), clientId))
+            .map(r -> controleAppartientAuClient(r.getControleId(), clientId, utilisateurId))
             .orElse(false);
     }
 
@@ -116,6 +126,18 @@ public class ScopeAuthorizationService {
         return rapportControleRepository.findById(rapportId)
             .map(r -> controleAppartientAOrganisme(r.getControleId(), controleTiersId))
             .orElse(false);
+    }
+
+    /** Chantiers accessibles par ce compte Client : uniquement ceux qui lui ont été
+        explicitement assignés (voir chantier_utilisateur). Aucune assignation = aucun accès. */
+    private List<UUID> chantierIdsAccessiblesPourClient(UUID clientId, UUID utilisateurId) {
+        List<UUID> chantierIdsDuClient = chantierIdsDuClient(clientId);
+        return chantierIdsAssignes(utilisateurId).stream().filter(chantierIdsDuClient::contains).toList();
+    }
+
+    private List<UUID> chantierIdsAssignes(UUID utilisateurId) {
+        return chantierUtilisateurRepository.findByUtilisateurId(utilisateurId).stream()
+            .map(ChantierUtilisateur::getChantierId).toList();
     }
 
     private List<UUID> chantierIdsDuClient(UUID clientId) {

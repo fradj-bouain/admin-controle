@@ -20,10 +20,10 @@ public class TypeDocumentService {
     private final TypeDocumentRepository typeDocumentRepository;
 
     public TypeDocument creer(String libelle, CibleDocument cible, boolean obligatoire, FormatDocument format,
-                               UUID corpsDeMetierId, UUID paysId, boolean dateDebutValiditeRequise,
+                               UUID corpsDeMetierId, UUID paysId, String zoneRequise, boolean dateDebutValiditeRequise,
                                boolean dateFinValiditeRequise, int nbJoursRelanceAvant, int nbJoursRecurrence,
                                boolean retireAccordAcces) {
-        TypeDocument type = TypeDocument.creer(libelle, cible, obligatoire, format, corpsDeMetierId, paysId,
+        TypeDocument type = TypeDocument.creer(libelle, cible, obligatoire, format, corpsDeMetierId, paysId, zoneRequise,
             dateDebutValiditeRequise, dateFinValiditeRequise, nbJoursRelanceAvant, nbJoursRecurrence, retireAccordAcces);
         return typeDocumentRepository.save(type);
     }
@@ -35,11 +35,11 @@ public class TypeDocumentService {
     }
 
     public TypeDocument modifier(UUID id, String libelle, CibleDocument cible, boolean obligatoire, FormatDocument format,
-                                  UUID corpsDeMetierId, UUID paysId, boolean dateDebutValiditeRequise,
+                                  UUID corpsDeMetierId, UUID paysId, String zoneRequise, boolean dateDebutValiditeRequise,
                                   boolean dateFinValiditeRequise, int nbJoursRelanceAvant, int nbJoursRecurrence,
                                   boolean retireAccordAcces) {
         TypeDocument type = obtenir(id);
-        type.modifier(libelle, cible, obligatoire, format, corpsDeMetierId, paysId, dateDebutValiditeRequise,
+        type.modifier(libelle, cible, obligatoire, format, corpsDeMetierId, paysId, zoneRequise, dateDebutValiditeRequise,
             dateFinValiditeRequise, nbJoursRelanceAvant, nbJoursRecurrence, retireAccordAcces);
         return type;
     }

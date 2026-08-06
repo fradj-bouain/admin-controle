@@ -39,7 +39,7 @@ public class QrCodeController {
     @GetMapping("/api/v1/salaries/{salarieId}/qrcode")
     @PreAuthorize("hasRole('SUPER_ADMIN') or "
         + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.salarieAppartientAEntreprise(#salarieId, @currentUser.entrepriseId().get())) or "
-        + "(@currentUser.clientId().isPresent() and @scopeAuthz.salarieAccessibleParClient(#salarieId, @currentUser.clientId().get())) or "
+        + "(@currentUser.clientId().isPresent() and @scopeAuthz.salarieAccessibleParClient(#salarieId, @currentUser.clientId().get(), @currentUser.keycloakId())) or "
         + "(@currentUser.entrepriseId().isEmpty() and @currentUser.clientId().isEmpty())")
     public QrCodeResponse obtenir(@PathVariable UUID salarieId) {
         return QrCodeResponse.from(qrCodeService.obtenirPourSalarie(salarieId));
@@ -55,7 +55,7 @@ public class QrCodeController {
     @GetMapping(value = "/api/v1/salaries/{salarieId}/qrcode/image", produces = MediaType.IMAGE_PNG_VALUE)
     @PreAuthorize("hasRole('SUPER_ADMIN') or "
         + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.salarieAppartientAEntreprise(#salarieId, @currentUser.entrepriseId().get())) or "
-        + "(@currentUser.clientId().isPresent() and @scopeAuthz.salarieAccessibleParClient(#salarieId, @currentUser.clientId().get())) or "
+        + "(@currentUser.clientId().isPresent() and @scopeAuthz.salarieAccessibleParClient(#salarieId, @currentUser.clientId().get(), @currentUser.keycloakId())) or "
         + "(@currentUser.entrepriseId().isEmpty() and @currentUser.clientId().isEmpty())")
     public ResponseEntity<byte[]> image(@PathVariable UUID salarieId) {
         QrCode qrCode = qrCodeService.obtenirPourSalarie(salarieId);

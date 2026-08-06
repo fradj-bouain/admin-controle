@@ -14,6 +14,7 @@ public record CreateTypeDocumentRequest(
     @NotNull FormatDocument format,
     UUID corpsDeMetierId,
     UUID paysId,
+    String zoneRequise,
     boolean dateDebutValiditeRequise,
     boolean dateFinValiditeRequise,
     int nbJoursRelanceAvant,

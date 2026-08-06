@@ -6,6 +6,7 @@ import com.fluttiris.admincontrol.document.api.dto.DocumentEnAttenteResponse;
 import com.fluttiris.admincontrol.document.api.dto.DocumentResponse;
 import com.fluttiris.admincontrol.document.api.dto.NotifierDocumentRequest;
 import com.fluttiris.admincontrol.document.api.dto.RefuserDocumentRequest;
+import com.fluttiris.admincontrol.document.api.dto.ValiderDocumentRequest;
 import com.fluttiris.admincontrol.document.application.DocumentService;
 import com.fluttiris.admincontrol.common.security.CurrentUser;
 import com.fluttiris.admincontrol.common.security.ScopeAuthorizationService;
@@ -17,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,8 +34,15 @@ public class DocumentController {
     @PostMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<DocumentResponse> creer(@Valid @RequestBody CreateDocumentRequest request) {
+        // Les dates de validité ne sont saisies que par l'administrateur, au moment de la
+        // validation (voir #valider) — jamais par l'entreprise/le salarié au dépôt, même si
+        // la requête en contient (ignorées silencieusement plutôt que rejetées, pour ne pas
+        // gêner un futur appel fait légitimement par un compte SUPER_ADMIN).
+        boolean estAdmin = currentUser.estAdmin();
         var document = documentService.creer(request.typeDocumentId(), request.salarieId(), request.entrepriseId(),
-            request.chantierId(), request.fichierUrl(), request.dateDebutValidite(), request.dateExpiration(),
+            request.chantierId(), request.fichierUrl(),
+            estAdmin ? request.dateDebutValidite() : null,
+            estAdmin ? request.dateExpiration() : null,
             request.dateRelance(), request.mentions());
         return ResponseEntity.status(HttpStatus.CREATED).body(DocumentResponse.from(document));
     }
@@ -52,14 +61,14 @@ public class DocumentController {
             if (estEntrepriseScope && !scopeAuthz.salarieAppartientAEntreprise(salarieId, currentUser.entrepriseId().get())) {
                 return List.of();
             }
-            if (estClientScope && !scopeAuthz.salarieAccessibleParClient(salarieId, currentUser.clientId().get())) {
+            if (estClientScope && !scopeAuthz.salarieAccessibleParClient(salarieId, currentUser.clientId().get(), currentUser.keycloakId())) {
                 return List.of();
             }
             return documentService.listerParSalarie(salarieId).stream().map(DocumentResponse::from).toList();
         }
         UUID scope = estEntrepriseScope ? currentUser.entrepriseId().get() : entrepriseId;
         if (scope != null) {
-            if (estClientScope && !scopeAuthz.entrepriseAccessibleParClient(scope, currentUser.clientId().get())) {
+            if (estClientScope && !scopeAuthz.entrepriseAccessibleParClient(scope, currentUser.clientId().get(), currentUser.keycloakId())) {
                 return List.of();
             }
             return documentService.listerParEntreprise(scope).stream().map(DocumentResponse::from).toList();
@@ -69,8 +78,10 @@ public class DocumentController {
 
     @PostMapping("/{id}/valider")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public DocumentResponse valider(@PathVariable UUID id) {
-        return DocumentResponse.from(documentService.valider(id));
+    public DocumentResponse valider(@PathVariable UUID id, @RequestBody(required = false) ValiderDocumentRequest request) {
+        LocalDate dateDebutValidite = request != null ? request.dateDebutValidite() : null;
+        LocalDate dateExpiration = request != null ? request.dateExpiration() : null;
+        return DocumentResponse.from(documentService.valider(id, dateDebutValidite, dateExpiration));
     }
 
     @PostMapping("/{id}/refuser")

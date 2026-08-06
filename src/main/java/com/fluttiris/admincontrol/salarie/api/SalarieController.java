@@ -49,7 +49,7 @@ public class SalarieController {
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN') or "
         + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.salarieAppartientAEntreprise(#id, @currentUser.entrepriseId().get())) or "
-        + "(@currentUser.clientId().isPresent() and @scopeAuthz.salarieAccessibleParClient(#id, @currentUser.clientId().get())) or "
+        + "(@currentUser.clientId().isPresent() and @scopeAuthz.salarieAccessibleParClient(#id, @currentUser.clientId().get(), @currentUser.keycloakId())) or "
         + "(@currentUser.entrepriseId().isEmpty() and @currentUser.clientId().isEmpty())")
     public SalarieResponse obtenir(@PathVariable UUID id) {
         return SalarieResponse.from(salarieService.obtenir(id));
@@ -58,17 +58,18 @@ public class SalarieController {
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public List<SalarieResponse> lister(@RequestParam(required = false) UUID entrepriseId) {
+        // Un compte Client est un tenant : uniquement les salariés affectés aux chantiers
+        // qui lui ont été explicitement assignés (voir ChantierService.listerAccessiblesPourClient) —
+        // aucun chantier assigné = aucun salarié visible.
+        if (currentUser.clientId().isPresent()) {
+            return salarieService.listerParClient(currentUser.clientId().get(), currentUser.keycloakId()).stream()
+                .map(SalarieResponse::from).toList();
+        }
         // Un compte Entreprise est toujours ramené à SON propre périmètre, même
         // s'il passe un autre entrepriseId en paramètre.
         UUID scope = currentUser.entrepriseId().orElse(entrepriseId);
         if (scope != null) {
             return salarieService.lister(scope).stream().map(SalarieResponse::from).toList();
-        }
-        // Un compte Client est aussi un tenant : uniquement les salariés affectés à
-        // SES chantiers, jamais le registre complet.
-        if (currentUser.clientId().isPresent()) {
-            return salarieService.listerParClient(currentUser.clientId().get()).stream()
-                .map(SalarieResponse::from).toList();
         }
         return salarieService.lister(null).stream().map(SalarieResponse::from).toList();
     }
@@ -98,7 +99,7 @@ public class SalarieController {
     @GetMapping("/{id}/chantiers")
     @PreAuthorize("hasRole('SUPER_ADMIN') or "
         + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.salarieAppartientAEntreprise(#id, @currentUser.entrepriseId().get())) or "
-        + "(@currentUser.clientId().isPresent() and @scopeAuthz.salarieAccessibleParClient(#id, @currentUser.clientId().get())) or "
+        + "(@currentUser.clientId().isPresent() and @scopeAuthz.salarieAccessibleParClient(#id, @currentUser.clientId().get(), @currentUser.keycloakId())) or "
         + "(@currentUser.entrepriseId().isEmpty() and @currentUser.clientId().isEmpty())")
     public List<AffectationSalarieChantierResponse> listerChantiers(@PathVariable UUID id) {
         return affectationSalarieChantierService.listerParSalarie(id).stream()

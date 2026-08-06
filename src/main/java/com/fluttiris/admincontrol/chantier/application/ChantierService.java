@@ -2,6 +2,8 @@ package com.fluttiris.admincontrol.chantier.application;
 
 import com.fluttiris.admincontrol.chantier.domain.Chantier;
 import com.fluttiris.admincontrol.chantier.domain.ChantierRepository;
+import com.fluttiris.admincontrol.chantier.domain.ChantierUtilisateur;
+import com.fluttiris.admincontrol.chantier.domain.ChantierUtilisateurRepository;
 import com.fluttiris.admincontrol.chantier.domain.RecurrenceControles;
 import com.fluttiris.admincontrol.common.exception.EntityNotFoundException;
 import com.fluttiris.admincontrol.entreprise.domain.AffectationEntrepriseChantier;
@@ -20,6 +22,7 @@ import java.util.UUID;
 public class ChantierService {
 
     private final ChantierRepository chantierRepository;
+    private final ChantierUtilisateurRepository chantierUtilisateurRepository;
     private final AffectationEntrepriseChantierRepository affectationEntrepriseChantierRepository;
 
     public Chantier creer(String nom, UUID clientId, String prestation, String adresse, String adresse2,
@@ -54,6 +57,27 @@ public class ChantierService {
     @Transactional(readOnly = true)
     public List<Chantier> listerParClient(UUID clientId) {
         return chantierRepository.findByClientId(clientId);
+    }
+
+    /**
+     * Chantiers accessibles par ce compte Client : uniquement ceux qui lui ont été
+     * explicitement assignés (via chantier_utilisateur, assignation faite depuis la fiche
+     * d'un chantier — voir ChantierUtilisateurController). Un utilisateur Client sans
+     * aucune assignation ne voit aucun chantier — l'accès est strictement opt-in, jamais
+     * accordé par défaut.
+     */
+    @Transactional(readOnly = true)
+    public List<UUID> listerIdsAccessiblesPourClient(UUID clientId, UUID utilisateurId) {
+        List<UUID> assignes = chantierUtilisateurRepository.findByUtilisateurId(utilisateurId).stream()
+            .map(ChantierUtilisateur::getChantierId).toList();
+        List<UUID> tousLesChantiersDuClient = chantierRepository.findByClientId(clientId).stream()
+            .map(Chantier::getId).toList();
+        return assignes.stream().filter(tousLesChantiersDuClient::contains).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Chantier> listerAccessiblesPourClient(UUID clientId, UUID utilisateurId) {
+        return chantierRepository.findAllById(listerIdsAccessiblesPourClient(clientId, utilisateurId));
     }
 
     @Transactional(readOnly = true)

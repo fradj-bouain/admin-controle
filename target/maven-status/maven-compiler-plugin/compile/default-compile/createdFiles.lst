@@ -133,6 +133,7 @@ com\fluttiris\admincontrol\configuration\api\dto\CreatePaysRequest.class
 com\fluttiris\admincontrol\entreprise\domain\EntrepriseRepository.class
 com\fluttiris\admincontrol\common\audit\HistoriqueModificationResponse.class
 com\fluttiris\admincontrol\qrcode\application\QrImageGenerator.class
+com\fluttiris\admincontrol\document\api\dto\ValiderDocumentRequest.class
 com\fluttiris\admincontrol\config\JwtConfig.class
 com\fluttiris\admincontrol\configuration\domain\ActionCorrectiveRepository.class
 com\fluttiris\admincontrol\entreprise\domain\AffectationEntrepriseChantier.class
