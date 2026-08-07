@@ -1,6 +1,8 @@
 package com.fluttiris.admincontrol.entreprise.application;
 
 import com.fluttiris.admincontrol.chantier.application.ChantierService;
+import com.fluttiris.admincontrol.chantier.domain.Chantier;
+import com.fluttiris.admincontrol.chantier.domain.ChantierRepository;
 import com.fluttiris.admincontrol.common.exception.EntityNotFoundException;
 import com.fluttiris.admincontrol.entreprise.domain.AffectationEntrepriseChantier;
 import com.fluttiris.admincontrol.entreprise.domain.AffectationEntrepriseChantierRepository;
@@ -12,8 +14,12 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +28,7 @@ public class EntrepriseService {
 
     private final EntrepriseRepository entrepriseRepository;
     private final ChantierService chantierService;
+    private final ChantierRepository chantierRepository;
     private final AffectationEntrepriseChantierRepository affectationEntrepriseChantierRepository;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -91,5 +98,40 @@ public class EntrepriseService {
     public void supprimer(UUID id) {
         Entreprise entreprise = obtenir(id);
         entreprise.supprimer();
+    }
+
+    /**
+     * Chantier "en cours" (affectation active, sans date de fin) pour chaque entreprise
+     * du lot — à ne pas confondre avec le champ `actif` de l'entreprise (simple
+     * interrupteur administratif, sans lien avec une affectation chantier réelle ; voir
+     * audit UX). Une entreprise absente du résultat n'a aucune affectation en cours
+     * ("Disponible" côté affichage — décision volontairement laissée au frontend). En
+     * une seule requête batch, pas de N+1 sur la liste complète.
+     */
+    @Transactional(readOnly = true)
+    public Map<UUID, String> chantierActuelParEntreprise(List<UUID> entrepriseIds) {
+        if (entrepriseIds.isEmpty()) {
+            return Map.of();
+        }
+        List<AffectationEntrepriseChantier> enCours = affectationEntrepriseChantierRepository
+            .findByEntrepriseIdInAndDateFinIsNullAndStatut(entrepriseIds, "ACTIF");
+        if (enCours.isEmpty()) {
+            return Map.of();
+        }
+        Map<UUID, String> nomChantierParId = chantierRepository.findAllById(
+            enCours.stream().map(AffectationEntrepriseChantier::getChantierId).distinct().toList()
+        ).stream().collect(Collectors.toMap(Chantier::getId, Chantier::getNom));
+
+        Map<UUID, List<String>> nomsParEntreprise = new HashMap<>();
+        for (AffectationEntrepriseChantier a : enCours) {
+            nomsParEntreprise.computeIfAbsent(a.getEntrepriseId(), k -> new ArrayList<>())
+                .add(nomChantierParId.getOrDefault(a.getChantierId(), ""));
+        }
+        Map<UUID, String> resultat = new HashMap<>();
+        for (var entry : nomsParEntreprise.entrySet()) {
+            List<String> noms = entry.getValue();
+            resultat.put(entry.getKey(), noms.size() == 1 ? noms.get(0) : noms.size() + " chantiers en cours");
+        }
+        return resultat;
     }
 }

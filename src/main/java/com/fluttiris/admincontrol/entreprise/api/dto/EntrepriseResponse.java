@@ -31,13 +31,22 @@ public record EntrepriseResponse(
     String responsableSignataireAgrement,
     String commentaire,
     Instant dateDesactivation,
-    boolean actif
+    boolean actif,
+    // Nom du chantier sur lequel cette entreprise est actuellement affectée (null =
+    // aucun, "Disponible" côté affichage) — distinct du champ `actif` ci-dessus, qui
+    // est un simple interrupteur administratif sans lien avec une affectation réelle.
+    String chantierActuel
 ) {
     public static EntrepriseResponse from(Entreprise e) {
+        return from(e, null);
+    }
+
+    public static EntrepriseResponse from(Entreprise e, String chantierActuel) {
         return new EntrepriseResponse(e.getId(), e.getRaisonSociale(), e.getSiret(), e.getAdresse(),
             e.getAdresse2(), e.getAdresse3(), e.getCodePostal(), e.getVille(), e.getPaysId(), e.getCorpsDeMetierId(),
             e.getTelephone(), e.getTelephone2(), e.getTelephone3(), e.getFax(), e.getEmail(), e.getEmail2(),
             e.getEmail3(), e.getFormeJuridique(), e.getSiren(), e.getRcsRci(), e.getTvaIntra(), e.getNumCotisant(),
-            e.getResponsableSignataireAgrement(), e.getCommentaire(), e.getDateDesactivation(), e.isActif());
+            e.getResponsableSignataireAgrement(), e.getCommentaire(), e.getDateDesactivation(), e.isActif(),
+            chantierActuel);
     }
 }

@@ -4,6 +4,7 @@ import com.fluttiris.admincontrol.auth.api.dto.CreateUtilisateurRequest;
 import com.fluttiris.admincontrol.auth.api.dto.UtilisateurResponse;
 import com.fluttiris.admincontrol.auth.application.UtilisateurService;
 import com.fluttiris.admincontrol.auth.domain.Utilisateur;
+import com.fluttiris.admincontrol.chantier.domain.ChantierUtilisateurRepository;
 import com.fluttiris.admincontrol.common.security.CurrentUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class UtilisateurController {
 
     private final UtilisateurService utilisateurService;
     private final CurrentUser currentUser;
+    private final ChantierUtilisateurRepository chantierUtilisateurRepository;
 
     @PostMapping
     @PreAuthorize("hasRole('SUPER_ADMIN') or @currentUser.clientId().isPresent() or @currentUser.entrepriseId().isPresent()")
@@ -66,7 +68,15 @@ public class UtilisateurController {
         } else {
             utilisateurs = utilisateurService.lister();
         }
-        return utilisateurs.stream().map(UtilisateurResponse::from).toList();
+        // Compte affiché uniquement pour les comptes CLIENT (voir audit UX) : le
+        // nombre de chantiers auxquels chacun a été explicitement assigné, pour que
+        // "aucun accès" (0 assignation = aucune visibilité, voir ScopeAuthorizationService)
+        // soit visible sur cette liste plutôt que découvert en silence par l'utilisateur.
+        return utilisateurs.stream()
+            .map(u -> UtilisateurResponse.from(u, u.getClientId() != null
+                ? chantierUtilisateurRepository.findByUtilisateurId(u.getId()).size()
+                : 0))
+            .toList();
     }
 
     @PostMapping("/{id}/desactiver")

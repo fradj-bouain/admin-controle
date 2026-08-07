@@ -21,4 +21,10 @@ public interface AffectationEntrepriseChantierRepository extends JpaRepository<A
                                                                                      RoleEntreprise role);
 
     List<AffectationEntrepriseChantier> findByAffectationParenteId(UUID affectationParenteId);
+
+    // Affectations "en cours" (sans date de fin, statut ACTIF) pour un lot d'entreprises
+    // en une seule requête — évite le N+1 quand on enrichit une liste entière (voir
+    // "chantier actuel").
+    List<AffectationEntrepriseChantier> findByEntrepriseIdInAndDateFinIsNullAndStatut(
+        Collection<UUID> entrepriseIds, String statut);
 }

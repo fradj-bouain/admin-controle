@@ -14,5 +14,9 @@ public interface AffectationSalarieChantierRepository extends JpaRepository<Affe
 
     List<AffectationSalarieChantier> findBySalarieId(UUID salarieId);
 
+    // Affectations "en cours" (sans date de fin) pour un lot de salariés en une seule
+    // requête — évite le N+1 quand on enrichit une liste entière (voir "chantier actuel").
+    List<AffectationSalarieChantier> findBySalarieIdInAndDateFinIsNull(Collection<UUID> salarieIds);
+
     boolean existsBySalarieIdAndChantierIdAndDateFinIsNull(UUID salarieId, UUID chantierId);
 }

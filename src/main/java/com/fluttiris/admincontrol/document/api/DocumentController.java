@@ -31,18 +31,19 @@ public class DocumentController {
     private final CurrentUser currentUser;
     private final ScopeAuthorizationService scopeAuthz;
 
+    // Le SUPER_ADMIN ne dépose jamais de document lui-même — son rôle se limite à
+    // valider/refuser ce que l'entreprise (ou le salarié via l'entreprise) a déposé.
+    // Décision confirmée explicitement : avant cette version, l'endpoint restait
+    // ouvert à un éventuel appel SUPER_ADMIN "légitime" qui ne s'est jamais présenté
+    // et que l'UI n'était de toute façon pas censée exposer.
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isAuthenticated() and !@currentUser.estAdmin()")
     public ResponseEntity<DocumentResponse> creer(@Valid @RequestBody CreateDocumentRequest request) {
         // Les dates de validité ne sont saisies que par l'administrateur, au moment de la
-        // validation (voir #valider) — jamais par l'entreprise/le salarié au dépôt, même si
-        // la requête en contient (ignorées silencieusement plutôt que rejetées, pour ne pas
-        // gêner un futur appel fait légitimement par un compte SUPER_ADMIN).
-        boolean estAdmin = currentUser.estAdmin();
+        // validation (voir #valider) — jamais par l'entreprise/le salarié au dépôt. L'appelant
+        // ne peut plus être admin ici (voir @PreAuthorize ci-dessus), donc toujours ignorées.
         var document = documentService.creer(request.typeDocumentId(), request.salarieId(), request.entrepriseId(),
-            request.chantierId(), request.fichierUrl(),
-            estAdmin ? request.dateDebutValidite() : null,
-            estAdmin ? request.dateExpiration() : null,
+            request.chantierId(), request.fichierUrl(), null, null,
             request.dateRelance(), request.mentions());
         return ResponseEntity.status(HttpStatus.CREATED).body(DocumentResponse.from(document));
     }

@@ -5,6 +5,7 @@ import com.fluttiris.admincontrol.salarie.api.dto.CreateSalarieRequest;
 import com.fluttiris.admincontrol.salarie.api.dto.SalarieResponse;
 import com.fluttiris.admincontrol.salarie.application.AffectationSalarieChantierService;
 import com.fluttiris.admincontrol.salarie.application.SalarieService;
+import com.fluttiris.admincontrol.salarie.domain.Salarie;
 import com.fluttiris.admincontrol.common.security.CurrentUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -62,16 +63,23 @@ public class SalarieController {
         // qui lui ont été explicitement assignés (voir ChantierService.listerAccessiblesPourClient) —
         // aucun chantier assigné = aucun salarié visible.
         if (currentUser.clientId().isPresent()) {
-            return salarieService.listerParClient(currentUser.clientId().get(), currentUser.keycloakId()).stream()
-                .map(SalarieResponse::from).toList();
+            return avecChantierActuel(salarieService.listerParClient(currentUser.clientId().get(), currentUser.keycloakId()));
         }
         // Un compte Entreprise est toujours ramené à SON propre périmètre, même
         // s'il passe un autre entrepriseId en paramètre.
         UUID scope = currentUser.entrepriseId().orElse(entrepriseId);
         if (scope != null) {
-            return salarieService.lister(scope).stream().map(SalarieResponse::from).toList();
+            return avecChantierActuel(salarieService.lister(scope));
         }
-        return salarieService.lister(null).stream().map(SalarieResponse::from).toList();
+        return avecChantierActuel(salarieService.lister(null));
+    }
+
+    private List<SalarieResponse> avecChantierActuel(List<Salarie> salaries) {
+        var chantierActuelParSalarie = salarieService.chantierActuelParSalarie(salaries.stream()
+            .map(Salarie::getId).toList());
+        return salaries.stream()
+            .map(s -> SalarieResponse.from(s, chantierActuelParSalarie.get(s.getId())))
+            .toList();
     }
 
     @PostMapping("/{id}/desactiver")

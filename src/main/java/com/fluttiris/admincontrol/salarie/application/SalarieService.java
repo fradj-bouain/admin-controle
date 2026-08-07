@@ -1,6 +1,8 @@
 package com.fluttiris.admincontrol.salarie.application;
 
 import com.fluttiris.admincontrol.chantier.application.ChantierService;
+import com.fluttiris.admincontrol.chantier.domain.Chantier;
+import com.fluttiris.admincontrol.chantier.domain.ChantierRepository;
 import com.fluttiris.admincontrol.common.exception.EntityNotFoundException;
 import com.fluttiris.admincontrol.salarie.domain.AffectationSalarieChantier;
 import com.fluttiris.admincontrol.salarie.domain.AffectationSalarieChantierRepository;
@@ -13,8 +15,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +29,7 @@ public class SalarieService {
 
     private final SalarieRepository salarieRepository;
     private final ChantierService chantierService;
+    private final ChantierRepository chantierRepository;
     private final AffectationSalarieChantierRepository affectationSalarieChantierRepository;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -85,5 +92,40 @@ public class SalarieService {
     public void supprimer(UUID id) {
         Salarie salarie = obtenir(id);
         salarie.supprimer();
+    }
+
+    /**
+     * Chantier "en cours" (affectation sans date de fin) pour chaque salarié du lot —
+     * à ne pas confondre avec le statut Actif/Inactif du salarié (simple interrupteur
+     * administratif, sans lien avec une affectation chantier réelle ; voir audit UX).
+     * Un salarié absent du résultat n'a aucune affectation en cours ("Disponible" côté
+     * affichage — décision volontairement laissée au frontend, pas ici). En une seule
+     * requête batch, pas de N+1 sur la liste complète.
+     */
+    @Transactional(readOnly = true)
+    public Map<UUID, String> chantierActuelParSalarie(List<UUID> salarieIds) {
+        if (salarieIds.isEmpty()) {
+            return Map.of();
+        }
+        List<AffectationSalarieChantier> enCours = affectationSalarieChantierRepository
+            .findBySalarieIdInAndDateFinIsNull(salarieIds);
+        if (enCours.isEmpty()) {
+            return Map.of();
+        }
+        Map<UUID, String> nomChantierParId = chantierRepository.findAllById(
+            enCours.stream().map(AffectationSalarieChantier::getChantierId).distinct().toList()
+        ).stream().collect(Collectors.toMap(Chantier::getId, Chantier::getNom));
+
+        Map<UUID, List<String>> nomsParSalarie = new HashMap<>();
+        for (AffectationSalarieChantier a : enCours) {
+            nomsParSalarie.computeIfAbsent(a.getSalarieId(), k -> new ArrayList<>())
+                .add(nomChantierParId.getOrDefault(a.getChantierId(), ""));
+        }
+        Map<UUID, String> resultat = new HashMap<>();
+        for (var entry : nomsParSalarie.entrySet()) {
+            List<String> noms = entry.getValue();
+            resultat.put(entry.getKey(), noms.size() == 1 ? noms.get(0) : noms.size() + " chantiers en cours");
+        }
+        return resultat;
     }
 }

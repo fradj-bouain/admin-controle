@@ -5,6 +5,7 @@ import com.fluttiris.admincontrol.entreprise.api.dto.CreateEntrepriseRequest;
 import com.fluttiris.admincontrol.entreprise.api.dto.EntrepriseResponse;
 import com.fluttiris.admincontrol.entreprise.application.AffectationEntrepriseChantierService;
 import com.fluttiris.admincontrol.entreprise.application.EntrepriseService;
+import com.fluttiris.admincontrol.entreprise.domain.Entreprise;
 import com.fluttiris.admincontrol.common.security.CurrentUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -65,16 +66,24 @@ public class EntrepriseController {
         // Un compte Entreprise est un tenant : il ne voit jamais le registre complet,
         // seulement sa propre fiche.
         if (currentUser.entrepriseId().isPresent()) {
-            return List.of(EntrepriseResponse.from(entrepriseService.obtenir(currentUser.entrepriseId().get())));
+            return avecChantierActuel(List.of(entrepriseService.obtenir(currentUser.entrepriseId().get())));
         }
         // Un compte Client est aussi un tenant : uniquement les entreprises affectées aux
         // chantiers qui lui ont été explicitement assignés, jamais le registre complet —
         // aucun chantier assigné = aucune entreprise visible.
         if (currentUser.clientId().isPresent()) {
-            return entrepriseService.listerParClient(currentUser.clientId().get(), currentUser.keycloakId()).stream()
-                .map(EntrepriseResponse::from).toList();
+            return avecChantierActuel(
+                entrepriseService.listerParClient(currentUser.clientId().get(), currentUser.keycloakId()));
         }
-        return entrepriseService.lister().stream().map(EntrepriseResponse::from).toList();
+        return avecChantierActuel(entrepriseService.lister());
+    }
+
+    private List<EntrepriseResponse> avecChantierActuel(List<Entreprise> entreprises) {
+        var chantierActuelParEntreprise = entrepriseService.chantierActuelParEntreprise(
+            entreprises.stream().map(Entreprise::getId).toList());
+        return entreprises.stream()
+            .map(e -> EntrepriseResponse.from(e, chantierActuelParEntreprise.get(e.getId())))
+            .toList();
     }
 
     @PostMapping("/{id}/desactiver")
