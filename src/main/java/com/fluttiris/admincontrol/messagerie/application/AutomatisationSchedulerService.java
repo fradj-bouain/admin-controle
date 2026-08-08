@@ -89,7 +89,7 @@ public class AutomatisationSchedulerService {
     void envoyerUnMessagePlanifie(MessagePlanifie message) {
         for (UUID destinataireId : resoudreDestinataires(message)) {
             messageService.envoyer(message.getExpediteurUtilisateurId(), message.getChantierId(),
-                resoudreDestinataireType(message), destinataireId, message.getSujet(), message.getContenu());
+                resoudreDestinataireType(message), destinataireId, message.getSujet(), message.getContenu(), null, null);
         }
         message.marquerEnvoye();
         if (message.getRegleId() != null) {

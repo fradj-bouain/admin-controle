@@ -1,5 +1,7 @@
 package com.fluttiris.admincontrol.client.application;
 
+import com.fluttiris.admincontrol.chantier.domain.Chantier;
+import com.fluttiris.admincontrol.chantier.application.ChantierService;
 import com.fluttiris.admincontrol.client.domain.Client;
 import com.fluttiris.admincontrol.client.domain.ClientRepository;
 import com.fluttiris.admincontrol.common.exception.EntityNotFoundException;
@@ -16,6 +18,7 @@ import java.util.UUID;
 public class ClientService {
 
     private final ClientRepository clientRepository;
+    private final ChantierService chantierService;
 
     public Client creer(String raisonSociale, String adresse, String adresse2, String adresse3, String codePostal,
                          String ville, UUID paysId, String telephone, String telephone2, String telephone3,
@@ -49,6 +52,14 @@ public class ClientService {
     @Transactional(readOnly = true)
     public List<Client> lister() {
         return clientRepository.findAll();
+    }
+
+    /** Clients dont au moins un chantier porte une affectation de cette entreprise. */
+    @Transactional(readOnly = true)
+    public List<Client> listerParEntreprise(UUID entrepriseId) {
+        List<UUID> clientIds = chantierService.listerParEntreprise(entrepriseId).stream()
+            .map(Chantier::getClientId).distinct().toList();
+        return clientRepository.findAllById(clientIds);
     }
 
     public Client desactiver(UUID id) {

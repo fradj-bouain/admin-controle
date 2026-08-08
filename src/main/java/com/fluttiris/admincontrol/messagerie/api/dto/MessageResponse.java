@@ -14,6 +14,8 @@ public record MessageResponse(
     UUID destinataireId,
     String sujet,
     String contenu,
+    UUID typeDocumentId,
+    UUID salarieId,
     boolean lu,
     UUID luParUtilisateurId,
     Instant dateLu,
@@ -21,7 +23,8 @@ public record MessageResponse(
 ) {
     public static MessageResponse from(Message m) {
         return new MessageResponse(m.getId(), m.getExpediteurUtilisateurId(), m.getChantierId(),
-            m.getDestinataireType(), m.getDestinataireId(), m.getSujet(), m.getContenu(), m.isLu(),
+            m.getDestinataireType(), m.getDestinataireId(), m.getSujet(), m.getContenu(),
+            m.getTypeDocumentId(), m.getSalarieId(), m.isLu(),
             m.getLuParUtilisateurId(), m.getDateLu(), m.getCreatedAt());
     }
 }

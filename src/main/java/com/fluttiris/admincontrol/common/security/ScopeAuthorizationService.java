@@ -9,6 +9,7 @@ import com.fluttiris.admincontrol.controle.domain.ControleRepository;
 import com.fluttiris.admincontrol.controle.domain.RapportControleRepository;
 import com.fluttiris.admincontrol.document.domain.Document;
 import com.fluttiris.admincontrol.document.domain.DocumentRepository;
+import com.fluttiris.admincontrol.entreprise.domain.AffectationEntrepriseChantier;
 import com.fluttiris.admincontrol.entreprise.domain.AffectationEntrepriseChantierRepository;
 import com.fluttiris.admincontrol.salarie.domain.AffectationSalarieChantierRepository;
 import com.fluttiris.admincontrol.salarie.domain.SalarieRepository;
@@ -97,6 +98,17 @@ public class ScopeAuthorizationService {
         }
         return affectationEntrepriseChantierRepository.findByEntrepriseId(entrepriseId).stream()
             .anyMatch(a -> chantierIds.contains(a.getChantierId()));
+    }
+
+    /** Le client a un chantier sur lequel cette entreprise a une affectation. */
+    public boolean clientAccessibleParEntreprise(UUID clientId, UUID entrepriseId) {
+        List<UUID> chantierIdsEntreprise = affectationEntrepriseChantierRepository.findByEntrepriseId(entrepriseId).stream()
+            .map(AffectationEntrepriseChantier::getChantierId).toList();
+        if (chantierIdsEntreprise.isEmpty()) {
+            return false;
+        }
+        return chantierRepository.findByClientId(clientId).stream()
+            .map(Chantier::getId).anyMatch(chantierIdsEntreprise::contains);
     }
 
     public boolean controleAppartientAuClient(UUID controleId, UUID clientId, UUID utilisateurId) {

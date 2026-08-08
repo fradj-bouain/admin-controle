@@ -45,6 +45,16 @@ public class Message {
     @Column(nullable = false)
     private String contenu;
 
+    /** Document attendu si ce message est une "demande de document" (voir salarie/entreprise-detail
+        demanderDocument) — permet au destinataire de déposer le fichier directement depuis le message. */
+    @Column(name = "type_document_id")
+    private UUID typeDocumentId;
+
+    /** Renseigné seulement quand la demande vise le document d'un salarié précis
+        (sinon le document attendu est celui de l'entreprise destinataire elle-même). */
+    @Column(name = "salarie_id")
+    private UUID salarieId;
+
     @Column(nullable = false)
     private boolean lu = false;
 
@@ -60,6 +70,11 @@ public class Message {
 
     public static Message envoyer(UUID expediteurUtilisateurId, UUID chantierId, DestinataireType destinataireType,
                                    UUID destinataireId, String sujet, String contenu) {
+        return envoyer(expediteurUtilisateurId, chantierId, destinataireType, destinataireId, sujet, contenu, null, null);
+    }
+
+    public static Message envoyer(UUID expediteurUtilisateurId, UUID chantierId, DestinataireType destinataireType,
+                                   UUID destinataireId, String sujet, String contenu, UUID typeDocumentId, UUID salarieId) {
         Message message = new Message();
         message.expediteurUtilisateurId = expediteurUtilisateurId;
         message.chantierId = chantierId;
@@ -67,6 +82,8 @@ public class Message {
         message.destinataireId = destinataireId;
         message.sujet = sujet;
         message.contenu = contenu;
+        message.typeDocumentId = typeDocumentId;
+        message.salarieId = salarieId;
         return message;
     }
 

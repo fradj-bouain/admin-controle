@@ -11,6 +11,8 @@ public record SendMessageRequest(
     @NotNull DestinataireType destinataireType,
     @NotNull UUID destinataireId,
     @NotBlank String sujet,
-    @NotBlank String contenu
+    @NotBlank String contenu,
+    UUID typeDocumentId,
+    UUID salarieId
 ) {
 }

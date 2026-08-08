@@ -30,7 +30,7 @@ public class MessageController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageResponse> envoyer(@Valid @RequestBody SendMessageRequest request) {
         var message = messageService.envoyer(currentUser.keycloakId(), request.chantierId(), request.destinataireType(),
-            request.destinataireId(), request.sujet(), request.contenu());
+            request.destinataireId(), request.sujet(), request.contenu(), request.typeDocumentId(), request.salarieId());
         return ResponseEntity.status(HttpStatus.CREATED).body(MessageResponse.from(message));
     }
 

@@ -20,8 +20,9 @@ public class MessageService {
     private final MessageRepository messageRepository;
 
     public Message envoyer(UUID expediteurId, UUID chantierId, DestinataireType type, UUID destinataireId,
-                            String sujet, String contenu) {
-        Message message = Message.envoyer(expediteurId, chantierId, type, destinataireId, sujet, contenu);
+                            String sujet, String contenu, UUID typeDocumentId, UUID salarieId) {
+        Message message = Message.envoyer(expediteurId, chantierId, type, destinataireId, sujet, contenu,
+            typeDocumentId, salarieId);
         return messageRepository.save(message);
     }
 

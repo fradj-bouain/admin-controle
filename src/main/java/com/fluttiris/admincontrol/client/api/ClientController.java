@@ -46,7 +46,9 @@ public class ClientController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN') or "
-        + "@currentUser.clientId().isEmpty() or @currentUser.clientId().get().equals(#id)")
+        + "(@currentUser.clientId().isPresent() and @currentUser.clientId().get().equals(#id)) or "
+        + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.clientAccessibleParEntreprise(#id, @currentUser.entrepriseId().get())) or "
+        + "(@currentUser.clientId().isEmpty() and @currentUser.entrepriseId().isEmpty())")
     public ClientResponse obtenir(@PathVariable UUID id) {
         return ClientResponse.from(clientService.obtenir(id));
     }
@@ -58,6 +60,12 @@ public class ClientController {
         // seulement sa propre fiche.
         if (currentUser.clientId().isPresent()) {
             return List.of(ClientResponse.from(clientService.obtenir(currentUser.clientId().get())));
+        }
+        // Un compte Entreprise est aussi un tenant : uniquement les clients dont elle
+        // a un chantier en charge, jamais le registre complet.
+        if (currentUser.entrepriseId().isPresent()) {
+            return clientService.listerParEntreprise(currentUser.entrepriseId().get()).stream()
+                .map(ClientResponse::from).toList();
         }
         return clientService.lister().stream().map(ClientResponse::from).toList();
     }
