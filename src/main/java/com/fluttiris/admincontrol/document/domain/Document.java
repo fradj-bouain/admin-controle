@@ -41,6 +41,20 @@ public class Document extends Auditable {
     @Column(name = "fichier_url")
     private String fichierUrl;
 
+    /** Nom du fichier tel que déposé par l'utilisateur (affiché à l'écran, jamais utilisé comme nom sur disque). */
+    @Column(name = "nom_fichier_original")
+    private String nomFichierOriginal;
+
+    @Column(name = "type_mime")
+    private String typeMime;
+
+    @Column(name = "taille_octets")
+    private Long tailleOctets;
+
+    /** Clé de stockage interne (nom de fichier généré, voir DocumentStorageService) — jamais exposée telle quelle au frontend. */
+    @Column(name = "chemin_stockage")
+    private String cheminStockage;
+
     @Column(name = "date_debut_validite")
     private LocalDate dateDebutValidite;
 
@@ -60,8 +74,14 @@ public class Document extends Auditable {
     @Column(name = "document_etat_id")
     private UUID documentEtatId;
 
+    /**
+     * @param nomFichierOriginal, typeMime, tailleOctets, cheminStockage infos du fichier réellement déposé
+     *                            (tous nullable — un document peut exister sans fichier, ex. une ligne créée
+     *                            en attente avant tout dépôt).
+     */
     public static Document creer(UUID typeDocumentId, UUID salarieId, UUID entrepriseId, UUID chantierId,
-                                  String fichierUrl, LocalDate dateDebutValidite, LocalDate dateExpiration,
+                                  String fichierUrl, String nomFichierOriginal, String typeMime, Long tailleOctets,
+                                  String cheminStockage, LocalDate dateDebutValidite, LocalDate dateExpiration,
                                   LocalDate dateRelance, String mentions) {
         if ((salarieId == null) == (entrepriseId == null)) {
             throw new BusinessRuleViolationException("Un document doit cibler exactement un salarié OU une entreprise");
@@ -72,6 +92,10 @@ public class Document extends Auditable {
         document.entrepriseId = entrepriseId;
         document.chantierId = chantierId;
         document.fichierUrl = fichierUrl;
+        document.nomFichierOriginal = nomFichierOriginal;
+        document.typeMime = typeMime;
+        document.tailleOctets = tailleOctets;
+        document.cheminStockage = cheminStockage;
         document.dateDebutValidite = dateDebutValidite;
         document.dateExpiration = dateExpiration;
         document.dateRelance = dateRelance;

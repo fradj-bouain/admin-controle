@@ -110,6 +110,7 @@ C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\ad
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\document\api\TypeDocumentController.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\document\application\DocumentEtatService.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\document\application\DocumentService.java
+C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\document\application\DocumentStorageService.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\document\application\TypeDocumentService.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\document\domain\CibleDocument.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\document\domain\Document.java

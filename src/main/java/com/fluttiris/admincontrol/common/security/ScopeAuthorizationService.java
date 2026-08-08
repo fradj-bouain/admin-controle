@@ -7,6 +7,8 @@ import com.fluttiris.admincontrol.chantier.domain.ChantierUtilisateur;
 import com.fluttiris.admincontrol.chantier.domain.ChantierUtilisateurRepository;
 import com.fluttiris.admincontrol.controle.domain.ControleRepository;
 import com.fluttiris.admincontrol.controle.domain.RapportControleRepository;
+import com.fluttiris.admincontrol.document.domain.Document;
+import com.fluttiris.admincontrol.document.domain.DocumentRepository;
 import com.fluttiris.admincontrol.entreprise.domain.AffectationEntrepriseChantierRepository;
 import com.fluttiris.admincontrol.salarie.domain.AffectationSalarieChantierRepository;
 import com.fluttiris.admincontrol.salarie.domain.SalarieRepository;
@@ -36,6 +38,7 @@ public class ScopeAuthorizationService {
     private final UtilisateurRepository utilisateurRepository;
     private final AffectationSalarieChantierRepository affectationSalarieChantierRepository;
     private final AffectationEntrepriseChantierRepository affectationEntrepriseChantierRepository;
+    private final DocumentRepository documentRepository;
 
     public boolean controleAppartientAOrganisme(UUID controleId, UUID controleTiersId) {
         return controleRepository.findById(controleId)
@@ -126,6 +129,35 @@ public class ScopeAuthorizationService {
         return rapportControleRepository.findById(rapportId)
             .map(r -> controleAppartientAOrganisme(r.getControleId(), controleTiersId))
             .orElse(false);
+    }
+
+    /**
+     * Centralise pour /documents/{id}/fichier exactement le même scoping que
+     * DocumentController.lister() applique déjà à la liste — un document est
+     * accessible si son salarié/entreprise l'est, selon le même arbre de règles.
+     * SUPER_ADMIN et les comptes internes (ni entreprise, ni client) passent toujours.
+     */
+    public boolean documentAccessible(UUID documentId, CurrentUser currentUser) {
+        Document document = documentRepository.findById(documentId).orElse(null);
+        if (document == null) {
+            return false;
+        }
+        if (currentUser.entrepriseId().isPresent()) {
+            UUID entrepriseId = currentUser.entrepriseId().get();
+            if (document.getSalarieId() != null) {
+                return salarieAppartientAEntreprise(document.getSalarieId(), entrepriseId);
+            }
+            return entrepriseId.equals(document.getEntrepriseId());
+        }
+        if (currentUser.clientId().isPresent()) {
+            UUID clientId = currentUser.clientId().get();
+            UUID utilisateurId = currentUser.keycloakId();
+            if (document.getSalarieId() != null) {
+                return salarieAccessibleParClient(document.getSalarieId(), clientId, utilisateurId);
+            }
+            return entrepriseAccessibleParClient(document.getEntrepriseId(), clientId, utilisateurId);
+        }
+        return true;
     }
 
     /** Chantiers accessibles par ce compte Client : uniquement ceux qui lui ont été

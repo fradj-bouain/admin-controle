@@ -36,28 +36,38 @@ public class MessageService {
     }
 
     @Transactional(readOnly = true)
-    public Message obtenir(UUID id, UUID utilisateurId, boolean estAdmin) {
+    public Message obtenir(UUID id, UUID utilisateurId, UUID entrepriseId, UUID clientId, boolean estAdmin) {
         Message message = messageRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Message", id));
         boolean estExpediteur = message.getExpediteurUtilisateurId().equals(utilisateurId);
-        boolean estDestinataire = message.getDestinataireType() == DestinataireType.UTILISATEUR
-            && message.getDestinataireId().equals(utilisateurId);
-        if (!estAdmin && !estExpediteur && !estDestinataire) {
+        if (!estAdmin && !estExpediteur && !estDestinataireDe(message, utilisateurId, entrepriseId, clientId)) {
             throw new AccessDeniedException("Ce message ne vous appartient pas");
         }
         return message;
     }
 
-    public Message marquerLu(UUID id, UUID utilisateurId) {
+    public Message marquerLu(UUID id, UUID utilisateurId, UUID entrepriseId, UUID clientId) {
         Message message = messageRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Message", id));
-        // Seul le véritable destinataire (compte Utilisateur ciblé) peut marquer un
-        // message comme lu — sinon n'importe quel compte authentifié pourrait
-        // manipuler le statut de lecture de messages d'autrui.
-        if (message.getDestinataireType() != DestinataireType.UTILISATEUR || !message.getDestinataireId().equals(utilisateurId)) {
+        // Le véritable destinataire — le compte Utilisateur ciblé, ou n'importe quel
+        // compte de l'Entreprise/du Client visé collectivement — peut seul marquer un
+        // message comme lu, sinon n'importe quel compte authentifié pourrait manipuler
+        // le statut de lecture de messages d'autrui.
+        if (!estDestinataireDe(message, utilisateurId, entrepriseId, clientId)) {
             throw new AccessDeniedException("Ce message ne vous est pas destiné");
         }
         message.marquerLu(utilisateurId);
         return message;
+    }
+
+    /** Un message peut cibler un compte Utilisateur précis, ou collectivement toute une
+        Entreprise / tout un Client — dans ce cas n'importe quel compte de cette
+        entreprise/ce client est un destinataire légitime, pas seulement son créateur. */
+    private boolean estDestinataireDe(Message message, UUID utilisateurId, UUID entrepriseId, UUID clientId) {
+        return switch (message.getDestinataireType()) {
+            case UTILISATEUR -> message.getDestinataireId().equals(utilisateurId);
+            case ENTREPRISE -> entrepriseId != null && message.getDestinataireId().equals(entrepriseId);
+            case CLIENT -> clientId != null && message.getDestinataireId().equals(clientId);
+        };
     }
 }

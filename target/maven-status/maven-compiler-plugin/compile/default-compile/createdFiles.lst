@@ -1,11 +1,13 @@
 com\fluttiris\admincontrol\messagerie\domain\MessagePlanifieRepository.class
 com\fluttiris\admincontrol\document\application\TypeDocumentService.class
 com\fluttiris\admincontrol\controle\api\dto\RapportControleResponse.class
+com\fluttiris\admincontrol\messagerie\application\MessageService$1.class
 com\fluttiris\admincontrol\entreprise\domain\AffectationEntrepriseChantierCreeeEvent.class
 com\fluttiris\admincontrol\controle\api\dto\ModifierControleRequest.class
 com\fluttiris\admincontrol\document\api\dto\DocumentResponse.class
 com\fluttiris\admincontrol\chantier\domain\ChantierUtilisateur.class
 com\fluttiris\admincontrol\controle\domain\Controle.class
+com\fluttiris\admincontrol\document\application\DocumentStorageService.class
 com\fluttiris\admincontrol\salarie\domain\SalarieCreeEvent.class
 com\fluttiris\admincontrol\configuration\domain\TypeContratSalarieRepository.class
 com\fluttiris\admincontrol\common\security\CurrentUser.class
@@ -24,6 +26,7 @@ com\fluttiris\admincontrol\entreprise\api\dto\EntrepriseResponse.class
 com\fluttiris\admincontrol\configuration\api\dto\CreateTypeContratSalarieRequest.class
 com\fluttiris\admincontrol\chantier\domain\RecurrenceControles.class
 com\fluttiris\admincontrol\salarie\domain\Salarie.class
+com\fluttiris\admincontrol\document\application\DocumentStorageService$StoredFile.class
 com\fluttiris\admincontrol\auth\api\dto\UtilisateurResponse.class
 com\fluttiris\admincontrol\common\security\ScopeAuthorizationService.class
 com\fluttiris\admincontrol\auth\application\UtilisateurService.class

@@ -8,16 +8,23 @@ import com.fluttiris.admincontrol.document.api.dto.NotifierDocumentRequest;
 import com.fluttiris.admincontrol.document.api.dto.RefuserDocumentRequest;
 import com.fluttiris.admincontrol.document.api.dto.ValiderDocumentRequest;
 import com.fluttiris.admincontrol.document.application.DocumentService;
+import com.fluttiris.admincontrol.document.domain.Document;
 import com.fluttiris.admincontrol.common.security.CurrentUser;
 import com.fluttiris.admincontrol.common.security.ScopeAuthorizationService;
 import com.fluttiris.admincontrol.messagerie.api.dto.MessagePlanifieResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -36,16 +43,40 @@ public class DocumentController {
     // Décision confirmée explicitement : avant cette version, l'endpoint restait
     // ouvert à un éventuel appel SUPER_ADMIN "légitime" qui ne s'est jamais présenté
     // et que l'UI n'était de toute façon pas censée exposer.
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated() and !@currentUser.estAdmin()")
-    public ResponseEntity<DocumentResponse> creer(@Valid @RequestBody CreateDocumentRequest request) {
+    public ResponseEntity<DocumentResponse> creer(@RequestPart("document") @Valid CreateDocumentRequest request,
+                                                   @RequestPart(value = "fichier", required = false) MultipartFile fichier) {
         // Les dates de validité ne sont saisies que par l'administrateur, au moment de la
         // validation (voir #valider) — jamais par l'entreprise/le salarié au dépôt. L'appelant
         // ne peut plus être admin ici (voir @PreAuthorize ci-dessus), donc toujours ignorées.
         var document = documentService.creer(request.typeDocumentId(), request.salarieId(), request.entrepriseId(),
             request.chantierId(), request.fichierUrl(), null, null,
-            request.dateRelance(), request.mentions());
+            request.dateRelance(), request.mentions(), fichier);
         return ResponseEntity.status(HttpStatus.CREATED).body(DocumentResponse.from(document));
+    }
+
+    /**
+     * Contenu binaire du fichier déposé — inline par défaut (aperçu dans le navigateur,
+     * <iframe>/<img>), attachment avec ?telecharger=true pour forcer un téléchargement.
+     * Même périmètre d'accès que GET / (voir ScopeAuthorizationService.documentAccessible),
+     * qui centralise ici la logique jusque-là dupliquée en dur dans lister().
+     */
+    @GetMapping("/{id}/fichier")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or @scopeAuthz.documentAccessible(#id, @currentUser)")
+    public ResponseEntity<Resource> fichier(@PathVariable UUID id,
+                                             @RequestParam(required = false, defaultValue = "false") boolean telecharger) {
+        Document document = documentService.obtenir(id);
+        Resource resource = documentService.chargerFichier(id);
+        MediaType typeMime = document.getTypeMime() != null
+            ? MediaType.parseMediaType(document.getTypeMime()) : MediaType.APPLICATION_OCTET_STREAM;
+        ContentDisposition disposition = ContentDisposition.builder(telecharger ? "attachment" : "inline")
+            .filename(document.getNomFichierOriginal() != null ? document.getNomFichierOriginal() : "document", StandardCharsets.UTF_8)
+            .build();
+        return ResponseEntity.ok()
+            .contentType(typeMime)
+            .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
+            .body(resource);
     }
 
     @GetMapping

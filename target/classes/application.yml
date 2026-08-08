@@ -22,6 +22,11 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
+
   # Pas de spring.security.oauth2.resourceserver.jwt.issuer-uri : le JwtDecoder
   # est fourni par JwtConfig (JWT auto-émis par ce backend, pas d'IdP externe).
 
@@ -42,6 +47,10 @@ spring:
 app:
   mail-from: ${MAIL_FROM:no-reply@admincontrol-btp.fr}
   frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:4200}
+  documents:
+    storage-dir: ${DOCUMENTS_STORAGE_DIR:./data/documents}
+    taille-max-mo: ${DOCUMENTS_TAILLE_MAX_MO:10}
+    extensions-autorisees: ${DOCUMENTS_EXTENSIONS_AUTORISEES:pdf,jpg,jpeg,png,doc,docx,odt}
 
 server:
   port: ${PORT:${SERVER_PORT:8080}}

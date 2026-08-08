@@ -20,8 +20,10 @@ import com.fluttiris.admincontrol.messagerie.domain.MessagePlanifieRepository;
 import com.fluttiris.admincontrol.salarie.domain.SalarieRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -44,6 +46,7 @@ public class DocumentService {
     private final MessagePlanifieRepository messagePlanifieRepository;
     private final EmailService emailService;
     private final HistoriqueModificationService historiqueService;
+    private final DocumentStorageService documentStorageService;
     private final CurrentUser currentUser;
 
     @Value("${app.frontend-base-url}")
@@ -51,13 +54,17 @@ public class DocumentService {
 
     public Document creer(UUID typeDocumentId, UUID salarieId, UUID entrepriseId, UUID chantierId,
                            String fichierUrl, LocalDate dateDebutValidite, LocalDate dateExpiration,
-                           LocalDate dateRelance, String mentions) {
+                           LocalDate dateRelance, String mentions, MultipartFile fichier) {
+        DocumentStorageService.StoredFile stocke = fichier != null && !fichier.isEmpty()
+            ? documentStorageService.stocker(fichier) : null;
         Document document = Document.creer(typeDocumentId, salarieId, entrepriseId, chantierId, fichierUrl,
+            stocke != null ? stocke.nomFichierOriginal() : null, stocke != null ? stocke.typeMime() : null,
+            stocke != null ? stocke.tailleOctets() : null, stocke != null ? stocke.cheminStockage() : null,
             dateDebutValidite, dateExpiration, dateRelance, mentions);
         document = documentRepository.save(document);
         Map<String, Object> details = new HashMap<>();
         details.put("typeDocumentLibelle", libelleType(typeDocumentId));
-        details.put("fichierUrl", fichierUrl);
+        details.put("nomFichier", stocke != null ? stocke.nomFichierOriginal() : fichierUrl);
         details.put("dateExpiration", dateExpiration);
         historiqueService.enregistrer(ENTITE, document.getId(), "CREATION", details);
         return document;
@@ -182,9 +189,20 @@ public class DocumentService {
         document.supprimer();
     }
 
-    private Document obtenir(UUID id) {
+    @Transactional(readOnly = true)
+    public Document obtenir(UUID id) {
         return documentRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Document", id));
+    }
+
+    /** @return le contenu binaire du fichier déposé sur ce document, jamais null (404 si aucun fichier n'a été déposé). */
+    @Transactional(readOnly = true)
+    public Resource chargerFichier(UUID id) {
+        Document document = obtenir(id);
+        if (document.getCheminStockage() == null) {
+            throw new EntityNotFoundException("Aucun fichier n'a été déposé pour ce document");
+        }
+        return documentStorageService.charger(document.getCheminStockage());
     }
 
     private String libelleType(UUID typeDocumentId) {
