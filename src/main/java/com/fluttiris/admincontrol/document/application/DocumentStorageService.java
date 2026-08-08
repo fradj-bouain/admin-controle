@@ -2,6 +2,8 @@ package com.fluttiris.admincontrol.document.application;
 
 import com.fluttiris.admincontrol.common.exception.BusinessRuleViolationException;
 import com.fluttiris.admincontrol.common.exception.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -23,13 +25,26 @@ import java.util.stream.Collectors;
  * en base n'est jamais qu'un nom de fichier généré ici (UUID + extension),
  * jamais le nom original ni un chemin fourni par le client — élimine tout
  * risque de path traversal ou de collision.
+ *
+ * Important en production (Railway ou tout autre conteneur) : ce disque est
+ * éphémère sauf volume persistant monté sur storage-dir — un redéploiement/
+ * redémarrage du conteneur efface les fichiers déjà déposés (seules les lignes
+ * en base survivent, avec un chemin_stockage qui ne pointe plus vers rien).
  */
 @Service
 public class DocumentStorageService {
 
+    private static final Logger log = LoggerFactory.getLogger(DocumentStorageService.class);
+
     private final Path storageDir;
     private final long tailleMaxOctets;
     private final Set<String> extensionsAutorisees;
+    // Si la création du répertoire échoue (ex. permissions du conteneur), l'appli
+    // démarre quand même — seul le dépôt/lecture de documents devient indisponible
+    // (erreur claire à l'usage), plutôt que de faire planter tout le contexte Spring
+    // au boot comme avant (un problème de stockage de fichiers ne doit jamais mettre
+    // /auth/login ou le reste de l'appli hors service).
+    private final boolean disponible;
 
     public DocumentStorageService(
         @Value("${app.documents.storage-dir}") String storageDir,
@@ -39,17 +54,25 @@ public class DocumentStorageService {
         this.tailleMaxOctets = tailleMaxMo * 1024 * 1024;
         this.extensionsAutorisees = Arrays.stream(extensionsAutorisees.split(","))
             .map(e -> e.trim().toLowerCase()).collect(Collectors.toUnmodifiableSet());
+        boolean ok;
         try {
             Files.createDirectories(this.storageDir);
+            ok = true;
         } catch (IOException e) {
-            throw new UncheckedIOException("Impossible de créer le répertoire de stockage des documents (" + this.storageDir + ")", e);
+            log.error("Stockage des documents indisponible ({}) — l'application démarre quand même, "
+                + "mais le dépôt/l'aperçu de documents échouera tant que ce n'est pas corrigé.", this.storageDir, e);
+            ok = false;
         }
+        this.disponible = ok;
     }
 
     public record StoredFile(String cheminStockage, String nomFichierOriginal, String typeMime, long tailleOctets) {
     }
 
     public StoredFile stocker(MultipartFile fichier) {
+        if (!disponible) {
+            throw new BusinessRuleViolationException("Le stockage des documents est momentanément indisponible côté serveur");
+        }
         if (fichier == null || fichier.isEmpty()) {
             throw new BusinessRuleViolationException("Aucun fichier fourni");
         }
@@ -76,6 +99,9 @@ public class DocumentStorageService {
     }
 
     public Resource charger(String cheminStockage) {
+        if (!disponible) {
+            throw new EntityNotFoundException("Le stockage des documents est momentanément indisponible côté serveur");
+        }
         Path chemin = storageDir.resolve(cheminStockage).normalize();
         if (!chemin.startsWith(storageDir) || !Files.exists(chemin)) {
             throw new EntityNotFoundException("Fichier introuvable sur le serveur");
