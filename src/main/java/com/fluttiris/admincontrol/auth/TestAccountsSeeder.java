@@ -6,6 +6,8 @@ import com.fluttiris.admincontrol.client.domain.Client;
 import com.fluttiris.admincontrol.client.domain.ClientRepository;
 import com.fluttiris.admincontrol.configuration.domain.ControleTiers;
 import com.fluttiris.admincontrol.configuration.domain.ControleTiersRepository;
+import com.fluttiris.admincontrol.configuration.domain.CorpsDeMetierRepository;
+import com.fluttiris.admincontrol.configuration.domain.PaysRepository;
 import com.fluttiris.admincontrol.entreprise.domain.Entreprise;
 import com.fluttiris.admincontrol.entreprise.domain.EntrepriseRepository;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +42,8 @@ public class TestAccountsSeeder implements ApplicationRunner {
     private final EntrepriseRepository entrepriseRepository;
     private final ClientRepository clientRepository;
     private final ControleTiersRepository controleTiersRepository;
+    private final PaysRepository paysRepository;
+    private final CorpsDeMetierRepository corpsDeMetierRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -53,9 +57,19 @@ public class TestAccountsSeeder implements ApplicationRunner {
         if (utilisateurRepository.existsByUsername("entreprise.test")) {
             return;
         }
+        // paysId/corpsDeMetierId résolus par leur clé métier (code ISO / libellé), jamais un UUID
+        // en dur : la table pays/corps_de_metier est réinsérée par la migration V1 avec un id
+        // généré à chaque nouvelle base (voir V1__init_schema.sql), donc un UUID figé ici casserait
+        // dès qu'on tourne sur une base fraîche. null si la ligne de référence est absente (ne
+        // bloque pas le seed, juste moins de champs renseignés).
+        UUID franceId = paysRepository.findByCodeIso("FR").map(p -> p.getId()).orElse(null);
+        UUID maconId = corpsDeMetierRepository.findByLibelle("MACON").map(c -> c.getId()).orElse(null);
         Entreprise entreprise = entrepriseRepository.save(Entreprise.creer(
-            "Entreprise Test", null, null, null, null, null, null, null, null, null, null,
-            null, null, null, null, null, null, null, null, null, null, null, null));
+            "Entreprise Test", "45289100300021", "12 rue de la Paix", null, null, "75002", "Paris",
+            franceId, maconId, "01 23 45 67 89", null, null, null,
+            "contact@entreprise-test.fr", null, null, "SARL",
+            "452891003", "RCS Paris B 452 891 003", "FR62452891003", "1234567890",
+            "M. Test RESPONSABLE", "Entreprise de test — créée automatiquement au démarrage."));
         creerCompte("entreprise.test", "Test", "Entreprise", "entreprise.test@admincontrol.local",
             Set.of("ENTREPRISE"), entreprise.getId(), null, null);
         log.warn("Compte de test créé : username=entreprise.test password={} (rôle ENTREPRISE, entrepriseId={})",
@@ -66,9 +80,13 @@ public class TestAccountsSeeder implements ApplicationRunner {
         if (utilisateurRepository.existsByUsername("client.test")) {
             return;
         }
+        UUID franceId = paysRepository.findByCodeIso("FR").map(p -> p.getId()).orElse(null);
         Client client = clientRepository.save(Client.creer(
-            "Client Test", null, null, null, null, null, null, null, null, null, null,
-            null, null, null, null, null, null, null, null, null, null));
+            "Client Test", "28 avenue Maréchal Foch", null, null, "69006", "Lyon", franceId,
+            "04 72 18 45 30", null, null, null,
+            "contact@client-test.fr", null, null, "SAS",
+            "521774902", "52177490200034", "RCS Lyon B 521 774 902", "FR18521774902",
+            "9876543210", "Mme Test RESPONSABLE"));
         creerCompte("client.test", "Test", "Client", "client.test@admincontrol.local",
             Set.of("CLIENT"), null, client.getId(), null);
         log.warn("Compte de test créé : username=client.test password={} (rôle CLIENT, clientId={})",
