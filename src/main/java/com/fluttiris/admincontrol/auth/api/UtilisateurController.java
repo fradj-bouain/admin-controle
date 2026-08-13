@@ -1,6 +1,7 @@
 package com.fluttiris.admincontrol.auth.api;
 
 import com.fluttiris.admincontrol.auth.api.dto.CreateUtilisateurRequest;
+import com.fluttiris.admincontrol.auth.api.dto.ModifierUtilisateurRequest;
 import com.fluttiris.admincontrol.auth.api.dto.UtilisateurResponse;
 import com.fluttiris.admincontrol.auth.application.UtilisateurService;
 import com.fluttiris.admincontrol.auth.domain.Utilisateur;
@@ -77,6 +78,16 @@ public class UtilisateurController {
                 ? chantierUtilisateurRepository.findByUtilisateurId(u.getId()).size()
                 : 0))
             .toList();
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
+        + "(@currentUser.clientId().isPresent() and @scopeAuthz.utilisateurAppartientAClient(#id, @currentUser.clientId().get())) or "
+        + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.utilisateurAppartientAEntreprise(#id, @currentUser.entrepriseId().get()))")
+    public UtilisateurResponse modifier(@PathVariable UUID id, @Valid @RequestBody ModifierUtilisateurRequest request) {
+        var utilisateur = utilisateurService.modifier(id, request.nom(), request.prenom(), request.email(),
+            request.username(), request.password());
+        return UtilisateurResponse.from(utilisateur);
     }
 
     @PostMapping("/{id}/desactiver")

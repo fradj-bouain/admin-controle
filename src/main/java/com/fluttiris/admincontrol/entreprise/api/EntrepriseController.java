@@ -47,9 +47,12 @@ public class EntrepriseController {
         return EntrepriseResponse.from(entrepriseService.obtenir(id));
     }
 
+    // Modification de la fiche entreprise : réservée au SUPER_ADMIN. L'Entreprise pouvait
+    // auparavant modifier sa propre fiche (coordonnées + infos légales) ; retiré à la demande
+    // du client réel du projet, qui veut que l'Entreprise reste en pur consultation sur ses
+    // propres informations comme sur celles de ses salariés (voir SalarieController).
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or "
-        + "(@currentUser.entrepriseId().isPresent() and @currentUser.entrepriseId().get().equals(#id))")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public EntrepriseResponse modifier(@PathVariable UUID id, @Valid @RequestBody CreateEntrepriseRequest request) {
         var entreprise = entrepriseService.modifier(id, request.raisonSociale(), request.siret(), request.adresse(),
             request.adresse2(), request.adresse3(), request.codePostal(), request.ville(), request.paysId(),

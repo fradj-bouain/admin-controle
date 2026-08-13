@@ -95,4 +95,18 @@ public class Utilisateur extends Auditable {
     public void desactiver() {
         this.actif = false;
     }
+
+    /** Auto-gestion (Mon équipe) comme SUPER_ADMIN : jamais le rôle ni le rattachement
+        entreprise/client/controleTiers, qui restent ceux fixés à la création — seule
+        l'identité du compte (nom/prénom/email/nom d'utilisateur) est modifiable ici. */
+    public void modifier(String nom, String prenom, String email, String username) {
+        this.nom = nom;
+        this.prenom = prenom;
+        this.email = email;
+        this.username = username;
+    }
+
+    public void changerMotDePasse(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
 }

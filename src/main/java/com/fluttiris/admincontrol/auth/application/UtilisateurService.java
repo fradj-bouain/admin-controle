@@ -52,6 +52,20 @@ public class UtilisateurService {
             .orElseThrow(() -> new EntityNotFoundException("Utilisateur", id));
     }
 
+    /** password null/vide = mot de passe inchangé (édition depuis Mon équipe : le champ y
+        est optionnel, contrairement à la création). */
+    public Utilisateur modifier(UUID id, String nom, String prenom, String email, String username, String password) {
+        Utilisateur utilisateur = obtenir(id);
+        if (!username.equals(utilisateur.getUsername()) && utilisateurRepository.existsByUsername(username)) {
+            throw new BusinessRuleViolationException("Ce nom d'utilisateur existe déjà");
+        }
+        utilisateur.modifier(nom, prenom, email, username);
+        if (password != null && !password.isBlank()) {
+            utilisateur.changerMotDePasse(passwordEncoder.encode(password));
+        }
+        return utilisateur;
+    }
+
     public Utilisateur desactiver(UUID id) {
         Utilisateur utilisateur = obtenir(id);
         utilisateur.desactiver();

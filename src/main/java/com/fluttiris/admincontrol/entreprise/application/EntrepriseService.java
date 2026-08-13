@@ -134,4 +134,19 @@ public class EntrepriseService {
         }
         return resultat;
     }
+
+    /**
+     * Résout en une seule requête batch la raison sociale de chaque entreprise — utilisé pour
+     * afficher les sous-traitants d'un chantier (voir AffectationEntrepriseChantierController) :
+     * une Entreprise n'a pas le droit de consulter la fiche d'une autre entreprise (obtenir()),
+     * donc le nom doit être embarqué dans la réponse d'affectation plutôt que résolu par le front.
+     */
+    @Transactional(readOnly = true)
+    public Map<UUID, String> raisonSocialeParEntrepriseIds(List<UUID> entrepriseIds) {
+        if (entrepriseIds.isEmpty()) {
+            return Map.of();
+        }
+        return entrepriseRepository.findAllById(entrepriseIds.stream().distinct().toList()).stream()
+            .collect(Collectors.toMap(Entreprise::getId, Entreprise::getRaisonSociale));
+    }
 }

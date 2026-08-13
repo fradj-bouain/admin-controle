@@ -125,6 +125,7 @@ com\fluttiris\admincontrol\controle\application\ControleService.class
 com\fluttiris\admincontrol\chantier\domain\ChantierUtilisateurId.class
 com\fluttiris\admincontrol\config\JpaAuditingConfig.class
 com\fluttiris\admincontrol\entreprise\api\dto\CreateEntrepriseRequest.class
+com\fluttiris\admincontrol\auth\api\dto\ModifierUtilisateurRequest.class
 com\fluttiris\admincontrol\auth\application\AuthenticationService.class
 com\fluttiris\admincontrol\common\audit\HistoriqueModification.class
 com\fluttiris\admincontrol\document\api\TypeDocumentController.class

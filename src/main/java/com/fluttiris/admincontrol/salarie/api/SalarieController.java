@@ -82,16 +82,16 @@ public class SalarieController {
             .toList();
     }
 
+    // Activer/désactiver un salarié : réservé au SUPER_ADMIN (demande client) — l'Entreprise
+    // garde le droit de créer/modifier ses salariés, mais plus de basculer leur statut.
     @PostMapping("/{id}/desactiver")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or "
-        + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.salarieAppartientAEntreprise(#id, @currentUser.entrepriseId().get()))")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public SalarieResponse desactiver(@PathVariable UUID id) {
         return SalarieResponse.from(salarieService.desactiver(id));
     }
 
     @PostMapping("/{id}/activer")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or "
-        + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.salarieAppartientAEntreprise(#id, @currentUser.entrepriseId().get()))")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public SalarieResponse activer(@PathVariable UUID id) {
         return SalarieResponse.from(salarieService.activer(id));
     }
