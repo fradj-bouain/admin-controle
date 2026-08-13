@@ -152,7 +152,6 @@ com\fluttiris\admincontrol\document\api\DocumentEtatController.class
 com\fluttiris\admincontrol\messagerie\domain\TypeDeclencheur.class
 com\fluttiris\admincontrol\document\domain\TypeDocumentRepository.class
 com\fluttiris\admincontrol\auth\api\dto\CreateUtilisateurRequest.class
-com\fluttiris\admincontrol\auth\DefaultAdminSeeder.class
 com\fluttiris\admincontrol\configuration\application\ReferenceDataService.class
 com\fluttiris\admincontrol\messagerie\application\AutomatisationSchedulerService$1.class
 com\fluttiris\admincontrol\auth\application\AuthenticationService$LoginResult.class

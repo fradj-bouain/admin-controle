@@ -22,14 +22,18 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Crée, si absents, un compte de test par rôle scopé (ENTREPRISE / CLIENT / CONTROLEUR),
- * chacun rattaché à une entité de test dédiée créée à la volée — pour pouvoir vérifier
- * manuellement le cloisonnement par permission (voir ScopeAuthorizationService) sans étape
- * manuelle. Idempotent PAR USERNAME (pas par "table utilisateur vide" comme DefaultAdminSeeder) :
+ * Crée, si absent, le compte SUPER_ADMIN de démarrage (admin.local) ainsi qu'un compte de
+ * test par rôle scopé (ENTREPRISE / CLIENT / CONTROLEUR), chacun rattaché à une entité de
+ * test dédiée créée à la volée — pour pouvoir vérifier manuellement le cloisonnement par
+ * permission (voir ScopeAuthorizationService) sans étape manuelle, et se connecter sans
+ * IdP externe à provisionner. Idempotent PAR USERNAME (pas "table utilisateur vide" — cette
+ * ancienne condition, portée par un DefaultAdminSeeder séparé, dépendait de l'ordre
+ * d'exécution des ApplicationRunner : si ce seeder-ci tournait en premier, admin.local
+ * n'était jamais créé. Fusionné ici, même idiome pour les 4 comptes, plus de risque d'ordre) :
  * tourne à chaque démarrage, ne recrée jamais un compte déjà présent.
  *
- * Mêmes réserves que DefaultAdminSeeder : mots de passe faibles et connus, à ne jamais
- * laisser survivre au-delà du poste de développement / d'un environnement de démo.
+ * Mots de passe faibles et connus, à ne jamais laisser survivre au-delà du poste de
+ * développement / d'un environnement de démo.
  */
 @Component
 @RequiredArgsConstructor
@@ -48,9 +52,22 @@ public class TestAccountsSeeder implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
+        seedAdmin();
         seedEntreprise();
         seedClient();
         seedControleur();
+    }
+
+    private void seedAdmin() {
+        String username = "admin.local";
+        if (utilisateurRepository.existsByUsername(username)) {
+            return;
+        }
+        Utilisateur admin = Utilisateur.creer(username, passwordEncoder.encode("admin"), null,
+            "Administrateur", "Système", "admin@admincontrol.local", Set.of("SUPER_ADMIN"), null, null, null);
+        utilisateurRepository.save(admin);
+        log.warn("Compte de démarrage créé : username={} password=admin (rôle SUPER_ADMIN). "
+            + "À changer avant tout déploiement au-delà du poste de développement.", username);
     }
 
     private void seedEntreprise() {

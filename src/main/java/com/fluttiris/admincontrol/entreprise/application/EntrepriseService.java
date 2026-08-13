@@ -136,6 +136,36 @@ public class EntrepriseService {
     }
 
     /**
+     * Rang(s) (PRINCIPALE/STT1/STT2) sur les chantiers "en cours" de chaque entreprise du
+     * lot — demande client : "mettre les rangs... sur le listing récapitulatif entreprises".
+     * Une entreprise peut porter des rangs différents sur des chantiers différents ; dans ce
+     * cas les rangs distincts sont listés plutôt que d'en choisir un arbitrairement. Même
+     * requête source que chantierActuelParEntreprise (affectations actives), calcul séparé
+     * pour rester lisible.
+     */
+    @Transactional(readOnly = true)
+    public Map<UUID, String> rangActuelParEntreprise(List<UUID> entrepriseIds) {
+        if (entrepriseIds.isEmpty()) {
+            return Map.of();
+        }
+        List<AffectationEntrepriseChantier> enCours = affectationEntrepriseChantierRepository
+            .findByEntrepriseIdInAndDateFinIsNullAndStatut(entrepriseIds, "ACTIF");
+        Map<UUID, List<String>> rangsParEntreprise = new HashMap<>();
+        for (AffectationEntrepriseChantier a : enCours) {
+            List<String> rangs = rangsParEntreprise.computeIfAbsent(a.getEntrepriseId(), k -> new ArrayList<>());
+            String rang = a.getRole().name();
+            if (!rangs.contains(rang)) {
+                rangs.add(rang);
+            }
+        }
+        Map<UUID, String> resultat = new HashMap<>();
+        for (var entry : rangsParEntreprise.entrySet()) {
+            resultat.put(entry.getKey(), String.join(", ", entry.getValue()));
+        }
+        return resultat;
+    }
+
+    /**
      * Résout en une seule requête batch la raison sociale de chaque entreprise — utilisé pour
      * afficher les sous-traitants d'un chantier (voir AffectationEntrepriseChantierController) :
      * une Entreprise n'a pas le droit de consulter la fiche d'une autre entreprise (obtenir()),

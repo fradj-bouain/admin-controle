@@ -82,10 +82,11 @@ public class EntrepriseController {
     }
 
     private List<EntrepriseResponse> avecChantierActuel(List<Entreprise> entreprises) {
-        var chantierActuelParEntreprise = entrepriseService.chantierActuelParEntreprise(
-            entreprises.stream().map(Entreprise::getId).toList());
+        var ids = entreprises.stream().map(Entreprise::getId).toList();
+        var chantierActuelParEntreprise = entrepriseService.chantierActuelParEntreprise(ids);
+        var rangActuelParEntreprise = entrepriseService.rangActuelParEntreprise(ids);
         return entreprises.stream()
-            .map(e -> EntrepriseResponse.from(e, chantierActuelParEntreprise.get(e.getId())))
+            .map(e -> EntrepriseResponse.from(e, chantierActuelParEntreprise.get(e.getId()), rangActuelParEntreprise.get(e.getId())))
             .toList();
     }
 
