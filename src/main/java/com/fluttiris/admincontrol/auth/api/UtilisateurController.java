@@ -5,8 +5,10 @@ import com.fluttiris.admincontrol.auth.api.dto.ModifierUtilisateurRequest;
 import com.fluttiris.admincontrol.auth.api.dto.UtilisateurResponse;
 import com.fluttiris.admincontrol.auth.application.UtilisateurService;
 import com.fluttiris.admincontrol.auth.domain.Utilisateur;
+import com.fluttiris.admincontrol.chantier.domain.ChantierUtilisateur;
 import com.fluttiris.admincontrol.chantier.domain.ChantierUtilisateurRepository;
 import com.fluttiris.admincontrol.common.security.CurrentUser;
+import com.fluttiris.admincontrol.common.security.ScopeAuthorizationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * SUPER_ADMIN gère tous les comptes. CLIENT/ENTREPRISE ont un droit
@@ -25,6 +28,12 @@ import java.util.UUID;
  * jamais choisir le rôle ou le rattachement, forcés ici quoi que contienne
  * la requête (même idiome que SalarieController.creer qui force déjà
  * entrepriseEmployeurId). CONTROLEUR n'a aucun accès à ce contrôleur.
+ *
+ * Pour un compte CLIENT spécifiquement, cette auto-gestion est en plus réservée
+ * au profil "accès total" (voir Utilisateur.accesTousChantiers) : un "responsable
+ * de chantier" n'a aucune raison de gérer les comptes du reste de l'équipe, il
+ * n'est même censé voir que ses propres chantiers. Aucune restriction équivalente
+ * pour ENTREPRISE, qui n'a pas cette notion à deux niveaux.
  */
 @RestController
 @RequestMapping("/api/v1/utilisateurs")
@@ -34,9 +43,12 @@ public class UtilisateurController {
     private final UtilisateurService utilisateurService;
     private final CurrentUser currentUser;
     private final ChantierUtilisateurRepository chantierUtilisateurRepository;
+    private final ScopeAuthorizationService scopeAuthz;
 
     @PostMapping
-    @PreAuthorize("hasRole('SUPER_ADMIN') or @currentUser.clientId().isPresent() or @currentUser.entrepriseId().isPresent()")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
+        + "(@currentUser.clientId().isPresent() and @scopeAuthz.aAccesTousChantiers(@currentUser.keycloakId())) or "
+        + "@currentUser.entrepriseId().isPresent()")
     public ResponseEntity<UtilisateurResponse> creer(@Valid @RequestBody CreateUtilisateurRequest request) {
         Set<String> roles = request.roles();
         UUID entrepriseId = request.entrepriseId();
@@ -66,12 +78,19 @@ public class UtilisateurController {
         return ResponseEntity.status(HttpStatus.CREATED).body(UtilisateurResponse.from(utilisateur));
     }
 
+    /** Un compte Client "responsable de chantier" ne gère jamais l'équipe (voir les autres
+        endpoints ci-dessous), mais consulter QUI d'autre intervient reste légitime — restreint
+        à ses propres collègues (voir scoperEquipePourResponsable) plutôt que bloqué en bloc :
+        le registre complet du client reste réservé au profil "accès total". */
     @GetMapping
     @PreAuthorize("hasRole('SUPER_ADMIN') or @currentUser.clientId().isPresent() or @currentUser.entrepriseId().isPresent()")
     public List<UtilisateurResponse> lister() {
         List<Utilisateur> utilisateurs;
         if (currentUser.clientId().isPresent()) {
-            utilisateurs = utilisateurService.listerParClient(currentUser.clientId().get());
+            List<Utilisateur> equipeDuClient = utilisateurService.listerParClient(currentUser.clientId().get());
+            utilisateurs = scopeAuthz.aAccesTousChantiers(currentUser.keycloakId())
+                ? equipeDuClient
+                : scoperEquipePourResponsable(equipeDuClient);
         } else if (currentUser.entrepriseId().isPresent()) {
             utilisateurs = utilisateurService.listerParEntreprise(currentUser.entrepriseId().get());
         } else {
@@ -88,9 +107,27 @@ public class UtilisateurController {
             .toList();
     }
 
+    /** Un "responsable de chantier" ne voit que les collègues avec qui il partage AU MOINS
+        un chantier (voir chantier_utilisateur), plus les comptes "accès total" du client —
+        toujours visibles, ce sont eux qui pilotent l'ensemble du périmètre. Un responsable
+        sans aucune assignation ne voit donc que ces derniers (ou personne s'il n'y en a pas),
+        cohérent avec le reste du modèle "accès strictement opt-in". */
+    private List<Utilisateur> scoperEquipePourResponsable(List<Utilisateur> equipeDuClient) {
+        Set<UUID> mesChantierIds = chantierUtilisateurRepository.findByUtilisateurId(currentUser.keycloakId()).stream()
+            .map(ChantierUtilisateur::getChantierId)
+            .collect(Collectors.toSet());
+        Set<UUID> collegueIds = mesChantierIds.stream()
+            .flatMap(chantierId -> chantierUtilisateurRepository.findByChantierId(chantierId).stream())
+            .map(ChantierUtilisateur::getUtilisateurId)
+            .collect(Collectors.toSet());
+        return equipeDuClient.stream()
+            .filter(u -> u.isAccesTousChantiers() || collegueIds.contains(u.getId()))
+            .toList();
+    }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN') or "
-        + "(@currentUser.clientId().isPresent() and @scopeAuthz.utilisateurAppartientAClient(#id, @currentUser.clientId().get())) or "
+        + "(@currentUser.clientId().isPresent() and @scopeAuthz.aAccesTousChantiers(@currentUser.keycloakId()) and @scopeAuthz.utilisateurAppartientAClient(#id, @currentUser.clientId().get())) or "
         + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.utilisateurAppartientAEntreprise(#id, @currentUser.entrepriseId().get()))")
     public UtilisateurResponse modifier(@PathVariable UUID id, @Valid @RequestBody ModifierUtilisateurRequest request) {
         // Même logique qu'à la création : seul un SUPER_ADMIN peut faire évoluer
@@ -104,7 +141,7 @@ public class UtilisateurController {
 
     @PostMapping("/{id}/desactiver")
     @PreAuthorize("hasRole('SUPER_ADMIN') or "
-        + "(@currentUser.clientId().isPresent() and @scopeAuthz.utilisateurAppartientAClient(#id, @currentUser.clientId().get())) or "
+        + "(@currentUser.clientId().isPresent() and @scopeAuthz.aAccesTousChantiers(@currentUser.keycloakId()) and @scopeAuthz.utilisateurAppartientAClient(#id, @currentUser.clientId().get())) or "
         + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.utilisateurAppartientAEntreprise(#id, @currentUser.entrepriseId().get()))")
     public UtilisateurResponse desactiver(@PathVariable UUID id) {
         return UtilisateurResponse.from(utilisateurService.desactiver(id));
@@ -112,7 +149,7 @@ public class UtilisateurController {
 
     @PostMapping("/{id}/activer")
     @PreAuthorize("hasRole('SUPER_ADMIN') or "
-        + "(@currentUser.clientId().isPresent() and @scopeAuthz.utilisateurAppartientAClient(#id, @currentUser.clientId().get())) or "
+        + "(@currentUser.clientId().isPresent() and @scopeAuthz.aAccesTousChantiers(@currentUser.keycloakId()) and @scopeAuthz.utilisateurAppartientAClient(#id, @currentUser.clientId().get())) or "
         + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.utilisateurAppartientAEntreprise(#id, @currentUser.entrepriseId().get()))")
     public UtilisateurResponse activer(@PathVariable UUID id) {
         return UtilisateurResponse.from(utilisateurService.activer(id));
@@ -120,7 +157,7 @@ public class UtilisateurController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN') or "
-        + "(@currentUser.clientId().isPresent() and @scopeAuthz.utilisateurAppartientAClient(#id, @currentUser.clientId().get())) or "
+        + "(@currentUser.clientId().isPresent() and @scopeAuthz.aAccesTousChantiers(@currentUser.keycloakId()) and @scopeAuthz.utilisateurAppartientAClient(#id, @currentUser.clientId().get())) or "
         + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.utilisateurAppartientAEntreprise(#id, @currentUser.entrepriseId().get()))")
     public ResponseEntity<Void> supprimer(@PathVariable UUID id) {
         utilisateurService.supprimer(id);

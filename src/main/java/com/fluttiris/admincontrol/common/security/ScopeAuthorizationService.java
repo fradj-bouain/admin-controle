@@ -84,8 +84,11 @@ public class ScopeAuthorizationService {
         return chantierIdsAssignes(utilisateurId).contains(chantierId);
     }
 
-    /** Voir Utilisateur.accesTousChantiers : profil "accès total" d'un compte Client. */
-    private boolean aAccesTousChantiers(UUID utilisateurId) {
+    /** Voir Utilisateur.accesTousChantiers : profil "accès total" d'un compte Client. Public
+        (au-delà de l'usage interne ci-dessus) : réutilisé par UtilisateurController pour
+        réserver la gestion de "Mon équipe" au compte fondateur — un "responsable de chantier"
+        n'a pas à administrer les comptes du reste de l'équipe. */
+    public boolean aAccesTousChantiers(UUID utilisateurId) {
         return utilisateurRepository.findById(utilisateurId).map(u -> u.isAccesTousChantiers()).orElse(false);
     }
 

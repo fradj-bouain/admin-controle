@@ -50,6 +50,13 @@ public class AuthenticationService {
         }
         if (utilisateur.getClientId() != null) {
             claims.claim("client_id", utilisateur.getClientId().toString());
+            // Uniquement pertinent pour un compte Client (voir Utilisateur.accesTousChantiers) :
+            // le frontend s'en sert pour savoir, sans appel réseau supplémentaire, si ce compte
+            // est "accès total" (badge de fiche, accès à Mon équipe...). Comme roles/client_id,
+            // cette valeur reste figée dans le token jusqu'à la prochaine connexion si un
+            // SUPER_ADMIN la modifie entre-temps — même compromis déjà accepté pour les autres
+            // claims de profil.
+            claims.claim("acces_tous_chantiers", utilisateur.isAccesTousChantiers());
         }
         if (utilisateur.getControleTiersId() != null) {
             claims.claim("controle_tiers_id", utilisateur.getControleTiersId().toString());
