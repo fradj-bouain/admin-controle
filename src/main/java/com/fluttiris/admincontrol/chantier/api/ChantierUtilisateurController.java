@@ -28,8 +28,13 @@ public class ChantierUtilisateurController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ChantierUtilisateurResponse.from(acces));
     }
 
+    /** Lecture élargie à un compte Client ayant accès à ce chantier (voir fiche Chantier,
+        bloc "Mon équipe ici") : la réponse ne contient que des identifiants déjà consultables
+        par ailleurs (GET /utilisateurs renvoie la même équipe pour ce rôle) — aucune donnée
+        supplémentaire exposée. La gestion (accorder/revoquer ci-dessus) reste SUPER_ADMIN. */
     @GetMapping
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
+        + "(@currentUser.clientId().isPresent() and @scopeAuthz.chantierAccessibleParClient(#chantierId, @currentUser.clientId().get(), @currentUser.keycloakId()))")
     public List<ChantierUtilisateurResponse> lister(@PathVariable UUID chantierId) {
         return chantierUtilisateurService.lister(chantierId).stream().map(ChantierUtilisateurResponse::from).toList();
     }

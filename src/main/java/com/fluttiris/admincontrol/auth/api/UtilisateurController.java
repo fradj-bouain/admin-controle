@@ -42,19 +42,27 @@ public class UtilisateurController {
         UUID entrepriseId = request.entrepriseId();
         UUID clientId = request.clientId();
         UUID controleTiersId = request.controleTiersId();
+        // Comme le rôle et le rattachement, "accès à tous les chantiers" ne se décide
+        // jamais en auto-gestion (Mon équipe) : un compte Client qui se crée lui-même
+        // une équipe ne peut pas s'auto-promouvoir "accès total", il reste forcément
+        // "responsable de chantier" tant qu'un SUPER_ADMIN ne l'a pas changé.
+        boolean accesTousChantiers = request.accesTousChantiers();
         if (currentUser.clientId().isPresent()) {
             roles = Set.of("CLIENT");
             clientId = currentUser.clientId().get();
             entrepriseId = null;
             controleTiersId = null;
+            accesTousChantiers = false;
         } else if (currentUser.entrepriseId().isPresent()) {
             roles = Set.of("ENTREPRISE");
             entrepriseId = currentUser.entrepriseId().get();
             clientId = null;
             controleTiersId = null;
+            accesTousChantiers = false;
         }
         var utilisateur = utilisateurService.creer(request.username(), request.password(), request.civilite(),
-            request.nom(), request.prenom(), request.email(), roles, entrepriseId, clientId, controleTiersId);
+            request.nom(), request.prenom(), request.email(), roles, entrepriseId, clientId, controleTiersId,
+            accesTousChantiers);
         return ResponseEntity.status(HttpStatus.CREATED).body(UtilisateurResponse.from(utilisateur));
     }
 
@@ -85,8 +93,12 @@ public class UtilisateurController {
         + "(@currentUser.clientId().isPresent() and @scopeAuthz.utilisateurAppartientAClient(#id, @currentUser.clientId().get())) or "
         + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.utilisateurAppartientAEntreprise(#id, @currentUser.entrepriseId().get()))")
     public UtilisateurResponse modifier(@PathVariable UUID id, @Valid @RequestBody ModifierUtilisateurRequest request) {
+        // Même logique qu'à la création : seul un SUPER_ADMIN peut faire évoluer
+        // "accès à tous les chantiers" — en auto-gestion (Mon équipe), la valeur envoyée
+        // est ignorée (null = inchangé côté service).
+        Boolean accesTousChantiers = currentUser.estAdmin() ? request.accesTousChantiers() : null;
         var utilisateur = utilisateurService.modifier(id, request.nom(), request.prenom(), request.email(),
-            request.username(), request.password());
+            request.username(), request.password(), accesTousChantiers);
         return UtilisateurResponse.from(utilisateur);
     }
 

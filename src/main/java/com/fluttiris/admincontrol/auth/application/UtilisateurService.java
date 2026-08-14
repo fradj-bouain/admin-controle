@@ -23,11 +23,18 @@ public class UtilisateurService {
 
     public Utilisateur creer(String username, String password, String civilite, String nom, String prenom,
                               String email, Set<String> roles, UUID entrepriseId, UUID clientId, UUID controleTiersId) {
+        return creer(username, password, civilite, nom, prenom, email, roles, entrepriseId, clientId, controleTiersId,
+            false);
+    }
+
+    public Utilisateur creer(String username, String password, String civilite, String nom, String prenom,
+                              String email, Set<String> roles, UUID entrepriseId, UUID clientId, UUID controleTiersId,
+                              boolean accesTousChantiers) {
         if (utilisateurRepository.existsByUsername(username)) {
             throw new BusinessRuleViolationException("Ce nom d'utilisateur existe déjà");
         }
         Utilisateur utilisateur = Utilisateur.creer(username, passwordEncoder.encode(password), civilite, nom,
-            prenom, email, roles, entrepriseId, clientId, controleTiersId);
+            prenom, email, roles, entrepriseId, clientId, controleTiersId, accesTousChantiers);
         return utilisateurRepository.save(utilisateur);
     }
 
@@ -53,8 +60,11 @@ public class UtilisateurService {
     }
 
     /** password null/vide = mot de passe inchangé (édition depuis Mon équipe : le champ y
-        est optionnel, contrairement à la création). */
-    public Utilisateur modifier(UUID id, String nom, String prenom, String email, String username, String password) {
+        est optionnel, contrairement à la création). accesTousChantiers null = inchangé :
+        le contrôleur n'y passe une valeur que pour un appel SUPER_ADMIN (voir
+        UtilisateurController), jamais pour l'auto-gestion Mon équipe. */
+    public Utilisateur modifier(UUID id, String nom, String prenom, String email, String username, String password,
+                                 Boolean accesTousChantiers) {
         Utilisateur utilisateur = obtenir(id);
         if (!username.equals(utilisateur.getUsername()) && utilisateurRepository.existsByUsername(username)) {
             throw new BusinessRuleViolationException("Ce nom d'utilisateur existe déjà");
@@ -62,6 +72,9 @@ public class UtilisateurService {
         utilisateur.modifier(nom, prenom, email, username);
         if (password != null && !password.isBlank()) {
             utilisateur.changerMotDePasse(passwordEncoder.encode(password));
+        }
+        if (accesTousChantiers != null) {
+            utilisateur.definirAccesTousChantiers(accesTousChantiers);
         }
         return utilisateur;
     }

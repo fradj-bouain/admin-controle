@@ -66,9 +66,10 @@ public class ScopeAuthorizationService {
     }
 
     /**
-     * Le chantier appartient à ce client ET a été explicitement assigné à ce compte Client
-     * via chantier_utilisateur. Sans assignation explicite, un compte Client n'a accès à
-     * aucun chantier — l'accès est strictement opt-in, jamais accordé par défaut.
+     * Le chantier appartient à ce client, ET (soit ce compte a "accès à tous les
+     * chantiers", soit il lui a été explicitement assigné via chantier_utilisateur).
+     * Un compte "responsable de chantier" sans aucune assignation n'a accès à aucun
+     * chantier — l'accès reste strictement opt-in pour ce profil, jamais accordé par défaut.
      */
     public boolean chantierAccessibleParClient(UUID chantierId, UUID clientId, UUID utilisateurId) {
         boolean appartientAuClient = chantierRepository.findById(chantierId)
@@ -77,7 +78,15 @@ public class ScopeAuthorizationService {
         if (!appartientAuClient) {
             return false;
         }
+        if (aAccesTousChantiers(utilisateurId)) {
+            return true;
+        }
         return chantierIdsAssignes(utilisateurId).contains(chantierId);
+    }
+
+    /** Voir Utilisateur.accesTousChantiers : profil "accès total" d'un compte Client. */
+    private boolean aAccesTousChantiers(UUID utilisateurId) {
+        return utilisateurRepository.findById(utilisateurId).map(u -> u.isAccesTousChantiers()).orElse(false);
     }
 
     /** Le salarié est affecté à au moins un chantier accessible par ce compte Client. */
@@ -172,10 +181,14 @@ public class ScopeAuthorizationService {
         return true;
     }
 
-    /** Chantiers accessibles par ce compte Client : uniquement ceux qui lui ont été
-        explicitement assignés (voir chantier_utilisateur). Aucune assignation = aucun accès. */
+    /** Chantiers accessibles par ce compte Client : tous ceux du client si "accès total"
+        (voir Utilisateur.accesTousChantiers), sinon uniquement ceux explicitement assignés
+        (voir chantier_utilisateur) — aucune assignation = aucun accès pour ce profil. */
     private List<UUID> chantierIdsAccessiblesPourClient(UUID clientId, UUID utilisateurId) {
         List<UUID> chantierIdsDuClient = chantierIdsDuClient(clientId);
+        if (aAccesTousChantiers(utilisateurId)) {
+            return chantierIdsDuClient;
+        }
         return chantierIdsAssignes(utilisateurId).stream().filter(chantierIdsDuClient::contains).toList();
     }
 

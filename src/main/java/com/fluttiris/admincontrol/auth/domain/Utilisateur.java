@@ -71,9 +71,23 @@ public class Utilisateur extends Auditable {
     @Column(nullable = false)
     private boolean actif = true;
 
+    /** Uniquement pertinent pour un compte Client : true = voit tous les chantiers du
+        Client (et tout ce qui en dépend : entreprises, salariés, documents, rapports),
+        false = "responsable de chantier", cantonné aux chantiers assignés via
+        chantier_utilisateur. Sans effet pour les autres types de compte. */
+    @Column(name = "acces_tous_chantiers", nullable = false)
+    private boolean accesTousChantiers = false;
+
     public static Utilisateur creer(String username, String passwordHash, String civilite, String nom,
                                      String prenom, String email, Set<String> roles, UUID entrepriseId, UUID clientId,
                                      UUID controleTiersId) {
+        return creer(username, passwordHash, civilite, nom, prenom, email, roles, entrepriseId, clientId,
+            controleTiersId, false);
+    }
+
+    public static Utilisateur creer(String username, String passwordHash, String civilite, String nom,
+                                     String prenom, String email, Set<String> roles, UUID entrepriseId, UUID clientId,
+                                     UUID controleTiersId, boolean accesTousChantiers) {
         Utilisateur utilisateur = new Utilisateur();
         utilisateur.username = username;
         utilisateur.passwordHash = passwordHash;
@@ -85,6 +99,7 @@ public class Utilisateur extends Auditable {
         utilisateur.entrepriseId = entrepriseId;
         utilisateur.clientId = clientId;
         utilisateur.controleTiersId = controleTiersId;
+        utilisateur.accesTousChantiers = accesTousChantiers;
         return utilisateur;
     }
 
@@ -108,5 +123,11 @@ public class Utilisateur extends Auditable {
 
     public void changerMotDePasse(String passwordHash) {
         this.passwordHash = passwordHash;
+    }
+
+    /** Réservé au SUPER_ADMIN (jamais via l'auto-gestion "Mon équipe") : bascule un
+        compte Client entre "accès total" et "responsable de chantier". */
+    public void definirAccesTousChantiers(boolean accesTousChantiers) {
+        this.accesTousChantiers = accesTousChantiers;
     }
 }

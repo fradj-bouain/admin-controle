@@ -32,8 +32,17 @@ public class AffectationSalarieChantierController {
             AffectationSalarieChantierResponse.from(affectation, affectationService.entrepriseIdDeLAffectation(affectation.getAffectationEntrepriseChantierId())));
     }
 
+    /** isAuthenticated() ouvrait ceci à N'IMPORTE QUEL chantier pour N'IMPORTE QUEL compte
+        authentifié, y compris un compte Client en devinant un id dans l'URL — jamais
+        remarqué tant qu'aucune vue Client ne consommait cet endpoint. Restreint désormais
+        pour un compte Client à ses seuls chantiers accessibles (voir
+        scopeAuthz.chantierAccessibleParClient) ; comportement inchangé pour tous les
+        autres rôles (Entreprise/Contrôleur/SUPER_ADMIN restaient déjà, eux, hors de cause
+        ici — c'est spécifiquement le champ Client qui manquait). */
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
+        + "@currentUser.clientId().isEmpty() or "
+        + "@scopeAuthz.chantierAccessibleParClient(#chantierId, @currentUser.clientId().get(), @currentUser.keycloakId())")
     public List<AffectationSalarieChantierResponse> lister(@PathVariable UUID chantierId) {
         return affectationService.listerParChantier(chantierId).stream()
             .map(a -> AffectationSalarieChantierResponse.from(a, affectationService.entrepriseIdDeLAffectation(a.getAffectationEntrepriseChantierId())))

@@ -45,9 +45,16 @@ public class AffectationEntrepriseChantierController {
         return ResponseEntity.status(HttpStatus.CREATED).body(AffectationEntrepriseChantierResponse.from(affectation));
     }
 
+    /** Un compte Client ne doit voir les entreprises d'un chantier QUE si ce chantier lui
+        est accessible (voir scopeAuthz.chantierAccessibleParClient) — sans ce garde-fou,
+        n'importe quel compte Client pouvait consulter les entreprises de N'IMPORTE QUEL
+        chantier en devinant son id dans l'URL (isEmpty() couvrait aussi bien Client que
+        Contrôleur). Comportement Entreprise/Contrôleur/SUPER_ADMIN inchangé. */
     @GetMapping
-    @PreAuthorize("hasRole('SUPER_ADMIN') or @currentUser.entrepriseId().isEmpty() or "
-        + "@chantierAuthz.isAffectedToChantier(#chantierId, @currentUser.entrepriseId().get())")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
+        + "(@currentUser.entrepriseId().isPresent() and @chantierAuthz.isAffectedToChantier(#chantierId, @currentUser.entrepriseId().get())) or "
+        + "(@currentUser.clientId().isPresent() and @scopeAuthz.chantierAccessibleParClient(#chantierId, @currentUser.clientId().get(), @currentUser.keycloakId())) or "
+        + "(@currentUser.entrepriseId().isEmpty() and @currentUser.clientId().isEmpty())")
     public List<AffectationEntrepriseChantierResponse> lister(@PathVariable UUID chantierId) {
         List<AffectationEntrepriseChantier> affectations = affectationService.listerParChantier(chantierId);
         Map<UUID, String> raisonSocialeParId = entrepriseService.raisonSocialeParEntrepriseIds(

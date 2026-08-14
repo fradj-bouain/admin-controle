@@ -3,8 +3,10 @@ package com.fluttiris.admincontrol.entreprise.api;
 import com.fluttiris.admincontrol.entreprise.api.dto.AffectationEntrepriseChantierResponse;
 import com.fluttiris.admincontrol.entreprise.api.dto.CreateEntrepriseRequest;
 import com.fluttiris.admincontrol.entreprise.api.dto.EntrepriseResponse;
+import com.fluttiris.admincontrol.chantier.application.ChantierService;
 import com.fluttiris.admincontrol.entreprise.application.AffectationEntrepriseChantierService;
 import com.fluttiris.admincontrol.entreprise.application.EntrepriseService;
+import com.fluttiris.admincontrol.entreprise.domain.AffectationEntrepriseChantier;
 import com.fluttiris.admincontrol.entreprise.domain.Entreprise;
 import com.fluttiris.admincontrol.common.security.CurrentUser;
 import jakarta.validation.Valid;
@@ -24,6 +26,7 @@ public class EntrepriseController {
 
     private final EntrepriseService entrepriseService;
     private final AffectationEntrepriseChantierService affectationEntrepriseChantierService;
+    private final ChantierService chantierService;
     private final CurrentUser currentUser;
 
     @PostMapping
@@ -109,13 +112,24 @@ public class EntrepriseController {
         return ResponseEntity.noContent().build();
     }
 
+    /** Un compte Client ne doit voir, parmi TOUS les chantiers de cette entreprise, que
+        ceux qui appartiennent à SON périmètre — sans ce filtre, il verrait avec quels
+        AUTRES clients cette entreprise travaille (fuite d'information concurrentielle).
+        Le @PreAuthorize vérifie seulement qu'il a accès à AU MOINS un chantier en commun
+        (voir scopeAuthz.entrepriseAccessibleParClient) ; le filtre ci-dessous s'assure
+        qu'aucun chantier hors périmètre ne fuite dans la réponse elle-même. */
     @GetMapping("/{id}/chantiers")
     @PreAuthorize("hasRole('SUPER_ADMIN') or "
         + "(@currentUser.entrepriseId().isPresent() and @currentUser.entrepriseId().get().equals(#id)) or "
-        + "@currentUser.entrepriseId().isEmpty()")
+        + "(@currentUser.clientId().isPresent() and @scopeAuthz.entrepriseAccessibleParClient(#id, @currentUser.clientId().get(), @currentUser.keycloakId())) or "
+        + "(@currentUser.entrepriseId().isEmpty() and @currentUser.clientId().isEmpty())")
     public List<AffectationEntrepriseChantierResponse> listerChantiers(@PathVariable UUID id) {
-        return affectationEntrepriseChantierService.listerParEntreprise(id).stream()
-            .map(AffectationEntrepriseChantierResponse::from)
-            .toList();
+        List<AffectationEntrepriseChantier> affectations = affectationEntrepriseChantierService.listerParEntreprise(id);
+        if (currentUser.clientId().isPresent()) {
+            List<UUID> chantierIdsAccessibles = chantierService.listerIdsAccessiblesPourClient(
+                currentUser.clientId().get(), currentUser.keycloakId());
+            affectations = affectations.stream().filter(a -> chantierIdsAccessibles.contains(a.getChantierId())).toList();
+        }
+        return affectations.stream().map(AffectationEntrepriseChantierResponse::from).toList();
     }
 }

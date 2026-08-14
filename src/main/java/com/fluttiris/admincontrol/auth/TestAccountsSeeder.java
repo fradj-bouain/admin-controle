@@ -104,8 +104,9 @@ public class TestAccountsSeeder implements ApplicationRunner {
             "contact@client-test.fr", null, null, "SAS",
             "521774902", "52177490200034", "RCS Lyon B 521 774 902", "FR18521774902",
             "9876543210", "Mme Test RESPONSABLE"));
+        // Compte fondateur du Client : accès total (voir logique "accès tous chantiers").
         creerCompte("client.test", "Test", "Client", "client.test@admincontrol.local",
-            Set.of("CLIENT"), null, client.getId(), null);
+            Set.of("CLIENT"), null, client.getId(), null, true);
         log.warn("Compte de test créé : username=client.test password={} (rôle CLIENT, clientId={})",
             PASSWORD, client.getId());
     }
@@ -123,8 +124,13 @@ public class TestAccountsSeeder implements ApplicationRunner {
 
     private void creerCompte(String username, String nom, String prenom, String email, Set<String> roles,
                               UUID entrepriseId, UUID clientId, UUID controleTiersId) {
+        creerCompte(username, nom, prenom, email, roles, entrepriseId, clientId, controleTiersId, false);
+    }
+
+    private void creerCompte(String username, String nom, String prenom, String email, Set<String> roles,
+                              UUID entrepriseId, UUID clientId, UUID controleTiersId, boolean accesTousChantiers) {
         Utilisateur utilisateur = Utilisateur.creer(username, passwordEncoder.encode(PASSWORD), null, nom, prenom,
-            email, roles, entrepriseId, clientId, controleTiersId);
+            email, roles, entrepriseId, clientId, controleTiersId, accesTousChantiers);
         utilisateurRepository.save(utilisateur);
     }
 }

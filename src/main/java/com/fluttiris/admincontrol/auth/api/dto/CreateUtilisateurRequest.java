@@ -16,6 +16,9 @@ public record CreateUtilisateurRequest(
     @NotEmpty Set<String> roles,
     UUID entrepriseId,
     UUID clientId,
-    UUID controleTiersId
+    UUID controleTiersId,
+    // Uniquement appliqué pour un compte CLIENT créé par un SUPER_ADMIN : ignoré côté
+    // serveur pour toute création en auto-gestion (Mon équipe), voir UtilisateurController.
+    boolean accesTousChantiers
 ) {
 }

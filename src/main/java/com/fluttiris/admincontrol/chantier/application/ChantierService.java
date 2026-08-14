@@ -5,6 +5,8 @@ import com.fluttiris.admincontrol.chantier.domain.ChantierRepository;
 import com.fluttiris.admincontrol.chantier.domain.ChantierUtilisateur;
 import com.fluttiris.admincontrol.chantier.domain.ChantierUtilisateurRepository;
 import com.fluttiris.admincontrol.chantier.domain.RecurrenceControles;
+import com.fluttiris.admincontrol.auth.domain.Utilisateur;
+import com.fluttiris.admincontrol.auth.domain.UtilisateurRepository;
 import com.fluttiris.admincontrol.common.exception.EntityNotFoundException;
 import com.fluttiris.admincontrol.entreprise.domain.AffectationEntrepriseChantier;
 import com.fluttiris.admincontrol.entreprise.domain.AffectationEntrepriseChantierRepository;
@@ -24,6 +26,7 @@ public class ChantierService {
     private final ChantierRepository chantierRepository;
     private final ChantierUtilisateurRepository chantierUtilisateurRepository;
     private final AffectationEntrepriseChantierRepository affectationEntrepriseChantierRepository;
+    private final UtilisateurRepository utilisateurRepository;
 
     public Chantier creer(String nom, UUID clientId, String prestation, String adresse, String adresse2,
                            String adresse3, String codePostal, String ville, UUID paysId, String noteInterne,
@@ -60,18 +63,25 @@ public class ChantierService {
     }
 
     /**
-     * Chantiers accessibles par ce compte Client : uniquement ceux qui lui ont été
-     * explicitement assignés (via chantier_utilisateur, assignation faite depuis la fiche
-     * d'un chantier — voir ChantierUtilisateurController). Un utilisateur Client sans
-     * aucune assignation ne voit aucun chantier — l'accès est strictement opt-in, jamais
-     * accordé par défaut.
+     * Chantiers accessibles par ce compte Client. Deux profils (voir Utilisateur.accesTousChantiers) :
+     * - "accès total" : tous les chantiers du Client, sans restriction ;
+     * - "responsable de chantier" (par défaut) : uniquement ceux qui lui ont été
+     *   explicitement assignés (via chantier_utilisateur, assignation faite depuis la
+     *   fiche d'un chantier — voir ChantierUtilisateurController). Sans aucune
+     *   assignation, un tel compte ne voit aucun chantier — l'accès reste strictement
+     *   opt-in, jamais accordé par défaut.
      */
     @Transactional(readOnly = true)
     public List<UUID> listerIdsAccessiblesPourClient(UUID clientId, UUID utilisateurId) {
-        List<UUID> assignes = chantierUtilisateurRepository.findByUtilisateurId(utilisateurId).stream()
-            .map(ChantierUtilisateur::getChantierId).toList();
         List<UUID> tousLesChantiersDuClient = chantierRepository.findByClientId(clientId).stream()
             .map(Chantier::getId).toList();
+        boolean accesTousChantiers = utilisateurRepository.findById(utilisateurId)
+            .map(Utilisateur::isAccesTousChantiers).orElse(false);
+        if (accesTousChantiers) {
+            return tousLesChantiersDuClient;
+        }
+        List<UUID> assignes = chantierUtilisateurRepository.findByUtilisateurId(utilisateurId).stream()
+            .map(ChantierUtilisateur::getChantierId).toList();
         return assignes.stream().filter(tousLesChantiersDuClient::contains).toList();
     }
 
