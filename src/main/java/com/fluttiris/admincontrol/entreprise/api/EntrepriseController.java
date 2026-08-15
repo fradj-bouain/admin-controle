@@ -50,18 +50,33 @@ public class EntrepriseController {
         return EntrepriseResponse.from(entrepriseService.obtenir(id));
     }
 
-    // Modification de la fiche entreprise : réservée au SUPER_ADMIN. L'Entreprise pouvait
-    // auparavant modifier sa propre fiche (coordonnées + infos légales) ; retiré à la demande
-    // du client réel du projet, qui veut que l'Entreprise reste en pur consultation sur ses
-    // propres informations comme sur celles de ses salariés (voir SalarieController).
+    // Modification de la fiche entreprise : SUPER_ADMIN (tous les champs) ou l'Entreprise
+    // elle-même (coordonnées uniquement — pas les informations légales). Un compte
+    // Entreprise pouvait auparavant tout modifier, puis plus rien ; ce comportement
+    // intermédiaire restaure l'auto-édition des coordonnées à la demande du client
+    // tout en gardant le registre légal (Siret/Siren/RCS-RCI/TVA intra) verrouillé
+    // administrateur — voir le figeage ci-dessous, appliqué même si la requête tente
+    // de les modifier (le champ désactivé côté UI n'est pas une garantie de sécurité).
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
+        + "(@currentUser.entrepriseId().isPresent() and @currentUser.entrepriseId().get().equals(#id))")
     public EntrepriseResponse modifier(@PathVariable UUID id, @Valid @RequestBody CreateEntrepriseRequest request) {
-        var entreprise = entrepriseService.modifier(id, request.raisonSociale(), request.siret(), request.adresse(),
+        String siret = request.siret();
+        String siren = request.siren();
+        String rcsRci = request.rcsRci();
+        String tvaIntra = request.tvaIntra();
+        if (currentUser.entrepriseId().isPresent()) {
+            var existante = entrepriseService.obtenir(id);
+            siret = existante.getSiret();
+            siren = existante.getSiren();
+            rcsRci = existante.getRcsRci();
+            tvaIntra = existante.getTvaIntra();
+        }
+        var entreprise = entrepriseService.modifier(id, request.raisonSociale(), siret, request.adresse(),
             request.adresse2(), request.adresse3(), request.codePostal(), request.ville(), request.paysId(),
             request.corpsDeMetierId(), request.telephone(), request.telephone2(), request.telephone3(),
             request.fax(), request.email(), request.email2(), request.email3(), request.formeJuridique(),
-            request.siren(), request.rcsRci(), request.tvaIntra(), request.numCotisant(),
+            siren, rcsRci, tvaIntra, request.numCotisant(),
             request.responsableSignataireAgrement(), request.commentaire());
         return EntrepriseResponse.from(entreprise);
     }

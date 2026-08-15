@@ -1,5 +1,6 @@
 package com.fluttiris.admincontrol.salarie.api;
 
+import com.fluttiris.admincontrol.chantier.application.ChantierService;
 import com.fluttiris.admincontrol.salarie.api.dto.AffectationSalarieChantierResponse;
 import com.fluttiris.admincontrol.salarie.api.dto.CreateSalarieRequest;
 import com.fluttiris.admincontrol.salarie.api.dto.SalarieResponse;
@@ -24,6 +25,7 @@ public class SalarieController {
 
     private final SalarieService salarieService;
     private final AffectationSalarieChantierService affectationSalarieChantierService;
+    private final ChantierService chantierService;
     private final CurrentUser currentUser;
 
     @PostMapping
@@ -104,15 +106,25 @@ public class SalarieController {
         return ResponseEntity.noContent().build();
     }
 
+    /** Un compte Client ne doit voir, parmi TOUTES les affectations de ce salarié, que
+        celles qui appartiennent à SON périmètre — sans ce filtre, il verrait sur quels
+        AUTRES chantiers (potentiellement d'autres clients) ce salarié intervient (fuite
+        d'information concurrentielle, même raisonnement que EntrepriseController.listerChantiers). */
     @GetMapping("/{id}/chantiers")
     @PreAuthorize("hasRole('SUPER_ADMIN') or "
         + "(@currentUser.entrepriseId().isPresent() and @scopeAuthz.salarieAppartientAEntreprise(#id, @currentUser.entrepriseId().get())) or "
         + "(@currentUser.clientId().isPresent() and @scopeAuthz.salarieAccessibleParClient(#id, @currentUser.clientId().get(), @currentUser.keycloakId())) or "
         + "(@currentUser.entrepriseId().isEmpty() and @currentUser.clientId().isEmpty())")
     public List<AffectationSalarieChantierResponse> listerChantiers(@PathVariable UUID id) {
-        return affectationSalarieChantierService.listerParSalarie(id).stream()
+        List<AffectationSalarieChantierResponse> affectations = affectationSalarieChantierService.listerParSalarie(id).stream()
             .map(a -> AffectationSalarieChantierResponse.from(a,
                 affectationSalarieChantierService.entrepriseIdDeLAffectation(a.getAffectationEntrepriseChantierId())))
             .toList();
+        if (currentUser.clientId().isPresent()) {
+            List<UUID> chantierIdsAccessibles = chantierService.listerIdsAccessiblesPourClient(
+                currentUser.clientId().get(), currentUser.keycloakId());
+            affectations = affectations.stream().filter(a -> chantierIdsAccessibles.contains(a.chantierId())).toList();
+        }
+        return affectations;
     }
 }

@@ -43,6 +43,7 @@ com\fluttiris\admincontrol\document\api\DocumentController.class
 com\fluttiris\admincontrol\messagerie\domain\DestinataireType.class
 com\fluttiris\admincontrol\document\domain\TypeDocument.class
 com\fluttiris\admincontrol\configuration\api\dto\CorpsDeMetierResponse.class
+com\fluttiris\admincontrol\auth\DemoDataSeeder$ProfilClient.class
 com\fluttiris\admincontrol\entreprise\api\dto\AffecterEntrepriseRequest.class
 com\fluttiris\admincontrol\auth\domain\Utilisateur.class
 com\fluttiris\admincontrol\chantier\application\ChantierService.class
@@ -61,6 +62,7 @@ com\fluttiris\admincontrol\salarie\api\AffectationSalarieChantierController.clas
 com\fluttiris\admincontrol\chantier\api\ChantierController.class
 com\fluttiris\admincontrol\salarie\api\dto\AffectationSalarieChantierResponse.class
 com\fluttiris\admincontrol\entreprise\api\EntrepriseController.class
+com\fluttiris\admincontrol\auth\api\dto\UtilisateurChantierResponse.class
 com\fluttiris\admincontrol\client\api\dto\ClientResponse.class
 com\fluttiris\admincontrol\salarie\api\dto\CreateSalarieRequest.class
 com\fluttiris\admincontrol\configuration\api\dto\TypeSalarieResponse.class
@@ -139,6 +141,7 @@ com\fluttiris\admincontrol\common\audit\HistoriqueModificationResponse.class
 com\fluttiris\admincontrol\qrcode\application\QrImageGenerator.class
 com\fluttiris\admincontrol\document\api\dto\ValiderDocumentRequest.class
 com\fluttiris\admincontrol\config\JwtConfig.class
+com\fluttiris\admincontrol\auth\DemoDataSeeder.class
 com\fluttiris\admincontrol\configuration\domain\ActionCorrectiveRepository.class
 com\fluttiris\admincontrol\entreprise\domain\AffectationEntrepriseChantier.class
 com\fluttiris\admincontrol\chantier\api\dto\AccorderAccesRequest.class
@@ -174,6 +177,7 @@ com\fluttiris\admincontrol\configuration\domain\ActionCorrective.class
 com\fluttiris\admincontrol\client\api\dto\CreateClientRequest.class
 com\fluttiris\admincontrol\document\domain\FormatDocument.class
 com\fluttiris\admincontrol\auth\api\dto\LoginResponse.class
+com\fluttiris\admincontrol\auth\DemoDataSeeder$ProfilEntreprise.class
 com\fluttiris\admincontrol\configuration\api\dto\SalarieFonctionResponse.class
 com\fluttiris\admincontrol\salarie\domain\AffectationSalarieChantier.class
 com\fluttiris\admincontrol\chantier\application\ChantierUtilisateurService.class
@@ -195,6 +199,7 @@ com\fluttiris\admincontrol\controle\api\ControleController.class
 com\fluttiris\admincontrol\controle\domain\RapportControle.class
 com\fluttiris\admincontrol\controle\domain\ControleSalarie.class
 com\fluttiris\admincontrol\controle\api\dto\ControleResponse.class
+com\fluttiris\admincontrol\auth\DemoDataSeeder$ProfilChantier.class
 com\fluttiris\admincontrol\controle\api\dto\ControleSalarieResponse.class
 com\fluttiris\admincontrol\salarie\domain\StatutAcces.class
 com\fluttiris\admincontrol\qrcode\domain\QrCodeRepository.class

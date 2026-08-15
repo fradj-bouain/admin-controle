@@ -2,9 +2,12 @@ package com.fluttiris.admincontrol.auth.api;
 
 import com.fluttiris.admincontrol.auth.api.dto.CreateUtilisateurRequest;
 import com.fluttiris.admincontrol.auth.api.dto.ModifierUtilisateurRequest;
+import com.fluttiris.admincontrol.auth.api.dto.UtilisateurChantierResponse;
 import com.fluttiris.admincontrol.auth.api.dto.UtilisateurResponse;
 import com.fluttiris.admincontrol.auth.application.UtilisateurService;
 import com.fluttiris.admincontrol.auth.domain.Utilisateur;
+import com.fluttiris.admincontrol.chantier.domain.Chantier;
+import com.fluttiris.admincontrol.chantier.domain.ChantierRepository;
 import com.fluttiris.admincontrol.chantier.domain.ChantierUtilisateur;
 import com.fluttiris.admincontrol.chantier.domain.ChantierUtilisateurRepository;
 import com.fluttiris.admincontrol.common.security.CurrentUser;
@@ -17,6 +20,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -43,6 +47,7 @@ public class UtilisateurController {
     private final UtilisateurService utilisateurService;
     private final CurrentUser currentUser;
     private final ChantierUtilisateurRepository chantierUtilisateurRepository;
+    private final ChantierRepository chantierRepository;
     private final ScopeAuthorizationService scopeAuthz;
 
     @PostMapping
@@ -122,6 +127,32 @@ public class UtilisateurController {
             .collect(Collectors.toSet());
         return equipeDuClient.stream()
             .filter(u -> u.isAccesTousChantiers() || collegueIds.contains(u.getId()))
+            .toList();
+    }
+
+    /** Détail "équipe" côté Client "accès total" : sur quels chantiers un COLLÈGUE
+        intervient, depuis quand, et où (voir retour client — le décompte seul sur le
+        listing "Mon équipe" ne suffit pas). Ouvert à SUPER_ADMIN, au compte lui-même, et à
+        un compte Client "accès total" consultant un autre compte de SON PROPRE client —
+        jamais un compte d'un autre client, ni un "responsable de chantier" consultant un
+        collègue (il n'a pas à administrer/auditer le reste de l'équipe, voir la classe). */
+    @GetMapping("/{id}/chantiers")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
+        + "@currentUser.keycloakId().equals(#id) or "
+        + "(@currentUser.clientId().isPresent() and @scopeAuthz.aAccesTousChantiers(@currentUser.keycloakId()) and @scopeAuthz.utilisateurAppartientAClient(#id, @currentUser.clientId().get()))")
+    public List<UtilisateurChantierResponse> listerChantiers(@PathVariable UUID id) {
+        List<ChantierUtilisateur> assignations = chantierUtilisateurRepository.findByUtilisateurId(id);
+        Map<UUID, Chantier> chantiersParId = chantierRepository
+            .findAllById(assignations.stream().map(ChantierUtilisateur::getChantierId).toList())
+            .stream()
+            .collect(Collectors.toMap(Chantier::getId, c -> c));
+        return assignations.stream()
+            .map(a -> {
+                Chantier c = chantiersParId.get(a.getChantierId());
+                return c == null ? null
+                    : new UtilisateurChantierResponse(c.getId(), c.getNom(), c.getVille(), c.getStatut(), a.getCreatedAt());
+            })
+            .filter(r -> r != null)
             .toList();
     }
 
