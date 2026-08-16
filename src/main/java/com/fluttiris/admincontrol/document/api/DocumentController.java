@@ -1,8 +1,10 @@
 package com.fluttiris.admincontrol.document.api;
 
 import com.fluttiris.admincontrol.common.audit.HistoriqueModificationResponse;
+import com.fluttiris.admincontrol.document.api.dto.ConformitePortefeuilleResponse;
 import com.fluttiris.admincontrol.document.api.dto.CreateDocumentRequest;
 import com.fluttiris.admincontrol.document.api.dto.DocumentEnAttenteResponse;
+import com.fluttiris.admincontrol.document.api.dto.DocumentExpirantResponse;
 import com.fluttiris.admincontrol.document.api.dto.DocumentResponse;
 import com.fluttiris.admincontrol.document.api.dto.NotifierDocumentRequest;
 import com.fluttiris.admincontrol.document.api.dto.RefuserDocumentRequest;
@@ -171,5 +173,17 @@ public class DocumentController {
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public List<DocumentEnAttenteResponse> enAttente() {
         return documentService.listerEnAttente();
+    }
+
+    @GetMapping("/expirant-bientot")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public List<DocumentExpirantResponse> expirantBientot(@RequestParam(required = false, defaultValue = "30") int jours) {
+        return documentService.listerExpirantBientot(jours);
+    }
+
+    @GetMapping("/conformite-entreprises")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ConformitePortefeuilleResponse conformiteEntreprises() {
+        return documentService.calculerConformitePortefeuille();
     }
 }

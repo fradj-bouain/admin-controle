@@ -1,9 +1,9 @@
 package com.fluttiris.admincontrol.document.api.dto;
 
-import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
-public record DocumentEnAttenteResponse(
+public record DocumentExpirantResponse(
     UUID documentId,
     UUID typeDocumentId,
     String typeLibelle,
@@ -11,6 +11,6 @@ public record DocumentEnAttenteResponse(
     String salarieNom,
     UUID entrepriseId,
     String entrepriseNom,
-    Instant createdAt
+    LocalDate dateExpiration
 ) {
 }

@@ -15,4 +15,9 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
     List<Document> findByDateExpiration(LocalDate dateExpiration);
 
     List<Document> findByStatutValidationOrderByCreatedAtDesc(StatutValidation statutValidation);
+
+    List<Document> findByStatutValidationAndDateExpirationBetweenOrderByDateExpirationAsc(
+        StatutValidation statutValidation, LocalDate debut, LocalDate fin);
+
+    List<Document> findByEntrepriseIdIsNotNull();
 }

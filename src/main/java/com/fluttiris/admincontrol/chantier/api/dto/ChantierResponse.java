@@ -4,6 +4,7 @@ import com.fluttiris.admincontrol.chantier.domain.Chantier;
 import com.fluttiris.admincontrol.chantier.domain.RecurrenceControles;
 import com.fluttiris.admincontrol.chantier.domain.StatutChantier;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -27,7 +28,8 @@ public record ChantierResponse(
     LocalDate dateFinPrevue,
     StatutChantier statut,
     RecurrenceControles recurrenceControles,
-    LocalDate dateProchainControle
+    LocalDate dateProchainControle,
+    Instant createdAt
 ) {
     public static ChantierResponse from(Chantier chantier) {
         return new ChantierResponse(
@@ -50,7 +52,8 @@ public record ChantierResponse(
             chantier.getDateFinPrevue(),
             chantier.getStatut(),
             chantier.getRecurrenceControles(),
-            chantier.getDateProchainControle()
+            chantier.getDateProchainControle(),
+            chantier.getCreatedAt()
         );
     }
 }

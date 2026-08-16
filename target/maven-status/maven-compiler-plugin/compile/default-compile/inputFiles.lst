@@ -99,11 +99,13 @@ C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\ad
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\controle\domain\RapportControleRepository.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\document\api\DocumentController.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\document\api\DocumentEtatController.java
+C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\document\api\dto\ConformitePortefeuilleResponse.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\document\api\dto\CreateDocumentEtatRequest.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\document\api\dto\CreateDocumentRequest.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\document\api\dto\CreateTypeDocumentRequest.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\document\api\dto\DocumentEnAttenteResponse.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\document\api\dto\DocumentEtatResponse.java
+C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\document\api\dto\DocumentExpirantResponse.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\document\api\dto\DocumentResponse.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\document\api\dto\NotifierDocumentRequest.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\document\api\dto\RefuserDocumentRequest.java

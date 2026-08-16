@@ -136,6 +136,8 @@ com\fluttiris\admincontrol\salarie\api\dto\RefuserAccesRequest.class
 com\fluttiris\admincontrol\config\SecurityConfig.class
 com\fluttiris\admincontrol\configuration\domain\PaysRepository.class
 com\fluttiris\admincontrol\configuration\api\dto\CreatePaysRequest.class
+com\fluttiris\admincontrol\document\api\dto\ConformitePortefeuilleResponse.class
+com\fluttiris\admincontrol\document\api\dto\DocumentExpirantResponse.class
 com\fluttiris\admincontrol\entreprise\domain\EntrepriseRepository.class
 com\fluttiris\admincontrol\common\audit\HistoriqueModificationResponse.class
 com\fluttiris\admincontrol\qrcode\application\QrImageGenerator.class

@@ -38,7 +38,8 @@ public record EntrepriseResponse(
     String chantierActuel,
     // Rang(s) (PRINCIPALE/STT1/STT2) sur ses chantiers en cours — null = aucune affectation
     // active. Voir EntrepriseService.rangActuelParEntreprise (demande client, listing).
-    String rangActuel
+    String rangActuel,
+    Instant createdAt
 ) {
     public static EntrepriseResponse from(Entreprise e) {
         return from(e, null, null);
@@ -54,6 +55,6 @@ public record EntrepriseResponse(
             e.getTelephone(), e.getTelephone2(), e.getTelephone3(), e.getFax(), e.getEmail(), e.getEmail2(),
             e.getEmail3(), e.getFormeJuridique(), e.getSiren(), e.getRcsRci(), e.getTvaIntra(), e.getNumCotisant(),
             e.getResponsableSignataireAgrement(), e.getCommentaire(), e.getDateDesactivation(), e.isActif(),
-            chantierActuel, rangActuel);
+            chantierActuel, rangActuel, e.getCreatedAt());
     }
 }

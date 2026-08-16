@@ -6,12 +6,17 @@ import com.fluttiris.admincontrol.common.exception.BusinessRuleViolationExceptio
 import com.fluttiris.admincontrol.common.exception.EntityNotFoundException;
 import com.fluttiris.admincontrol.common.mail.EmailService;
 import com.fluttiris.admincontrol.common.security.CurrentUser;
+import com.fluttiris.admincontrol.document.api.dto.ConformitePortefeuilleResponse;
 import com.fluttiris.admincontrol.document.api.dto.DocumentEnAttenteResponse;
+import com.fluttiris.admincontrol.document.api.dto.DocumentExpirantResponse;
+import com.fluttiris.admincontrol.document.domain.CibleDocument;
 import com.fluttiris.admincontrol.document.domain.Document;
 import com.fluttiris.admincontrol.document.domain.DocumentEtatRepository;
 import com.fluttiris.admincontrol.document.domain.DocumentRepository;
 import com.fluttiris.admincontrol.document.domain.StatutValidation;
+import com.fluttiris.admincontrol.document.domain.TypeDocument;
 import com.fluttiris.admincontrol.document.domain.TypeDocumentRepository;
+import com.fluttiris.admincontrol.entreprise.domain.Entreprise;
 import com.fluttiris.admincontrol.entreprise.domain.EntrepriseRepository;
 import com.fluttiris.admincontrol.messagerie.api.dto.MessagePlanifieResponse;
 import com.fluttiris.admincontrol.messagerie.domain.DestinataireType;
@@ -27,8 +32,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -171,6 +178,7 @@ public class DocumentService {
         return documentRepository.findByStatutValidationOrderByCreatedAtDesc(StatutValidation.EN_ATTENTE).stream()
             .map(d -> new DocumentEnAttenteResponse(
                 d.getId(),
+                d.getTypeDocumentId(),
                 libelleType(d.getTypeDocumentId()),
                 d.getSalarieId(),
                 d.getSalarieId() != null ? nomSalarie(d.getSalarieId()) : null,
@@ -179,6 +187,63 @@ public class DocumentService {
                 d.getCreatedAt()
             ))
             .toList();
+    }
+
+    /** Documents déjà validés dont la date d'expiration tombe dans les {@code joursSeuil}
+        prochains jours (tous portefeuilles confondus) — sert au KPI "Documents expirant"
+        et au bloc "Échéances à venir" du tableau de bord Admin, qui n'avaient jusqu'ici
+        aucune vue portefeuille (seule la fiche d'une entreprise/d'un salarié montrait ses
+        propres expirations, une à la fois). */
+    @Transactional(readOnly = true)
+    public List<DocumentExpirantResponse> listerExpirantBientot(int joursSeuil) {
+        LocalDate aujourdHui = LocalDate.now();
+        return documentRepository.findByStatutValidationAndDateExpirationBetweenOrderByDateExpirationAsc(
+                StatutValidation.VALIDE, aujourdHui, aujourdHui.plusDays(joursSeuil)).stream()
+            .map(d -> new DocumentExpirantResponse(
+                d.getId(),
+                d.getTypeDocumentId(),
+                libelleType(d.getTypeDocumentId()),
+                d.getSalarieId(),
+                d.getSalarieId() != null ? nomSalarie(d.getSalarieId()) : null,
+                d.getEntrepriseId(),
+                d.getEntrepriseId() != null ? nomEntreprise(d.getEntrepriseId()) : null,
+                d.getDateExpiration()
+            ))
+            .toList();
+    }
+
+    /** Combien d'entreprises actives ont, pour chacun de leurs types de documents
+        obligatoires (filtrés par corps de métier / pays comme sur la fiche entreprise,
+        voir EntrepriseDetailComponent#recalculerTypesPourEntreprise côté frontend, jamais
+        dupliqué jusqu'ici côté backend), un document au statut VALIDE. Sert au KPI
+        "Entreprises à jour" du tableau de bord Admin plutôt qu'un total brut d'entreprises. */
+    @Transactional(readOnly = true)
+    public ConformitePortefeuilleResponse calculerConformitePortefeuille() {
+        List<Entreprise> entreprises = entrepriseRepository.findByActifTrue();
+        List<TypeDocument> typesObligatoires = typeDocumentRepository.findAll().stream()
+            .filter(t -> t.getCible() == CibleDocument.ENTREPRISE && t.isObligatoire())
+            .toList();
+
+        Map<UUID, Set<UUID>> typesValidesParEntreprise = new HashMap<>();
+        for (Document d : documentRepository.findByEntrepriseIdIsNotNull()) {
+            if (d.getStatutValidation() == StatutValidation.VALIDE) {
+                typesValidesParEntreprise.computeIfAbsent(d.getEntrepriseId(), k -> new HashSet<>()).add(d.getTypeDocumentId());
+            }
+        }
+
+        int conformes = 0;
+        for (Entreprise entreprise : entreprises) {
+            List<TypeDocument> typesPourEntreprise = typesObligatoires.stream()
+                .filter(t -> t.getCorpsDeMetierId() == null || t.getCorpsDeMetierId().equals(entreprise.getCorpsDeMetierId()))
+                .filter(t -> t.getPaysId() == null || t.getPaysId().equals(entreprise.getPaysId()))
+                .toList();
+            Set<UUID> valides = typesValidesParEntreprise.getOrDefault(entreprise.getId(), Set.of());
+            boolean estConforme = typesPourEntreprise.stream().allMatch(t -> valides.contains(t.getId()));
+            if (estConforme) {
+                conformes++;
+            }
+        }
+        return new ConformitePortefeuilleResponse(conformes, entreprises.size());
     }
 
     public void supprimer(UUID id) {
