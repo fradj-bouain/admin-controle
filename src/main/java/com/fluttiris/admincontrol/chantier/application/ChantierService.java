@@ -16,7 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -130,5 +132,18 @@ public class ChantierService {
     public void supprimer(UUID id) {
         Chantier chantier = obtenir(id);
         chantier.supprimer();
+    }
+
+    /** Même rôle que EntrepriseService.raisonSocialeParEntrepriseIds : résout en une seule
+        requête les noms de chantier à embarquer dans une réponse d'affectation, pour une
+        liste transverse à tous les chantiers (voir AffectationEntrepriseChantierController /
+        AffectationSalarieChantierController, endpoint "toutes affectations"). */
+    @Transactional(readOnly = true)
+    public Map<UUID, String> nomParChantierIds(List<UUID> chantierIds) {
+        if (chantierIds.isEmpty()) {
+            return Map.of();
+        }
+        return chantierRepository.findAllById(chantierIds.stream().distinct().toList()).stream()
+            .collect(Collectors.toMap(Chantier::getId, Chantier::getNom));
     }
 }

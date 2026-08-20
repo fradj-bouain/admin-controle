@@ -94,6 +94,18 @@ public class SalarieService {
         salarie.supprimer();
     }
 
+    /** Même rôle que EntrepriseService.raisonSocialeParEntrepriseIds / ChantierService.nomParChantierIds
+        — résout en une seule requête les noms de salarié pour la liste transverse (voir
+        SalarieController, GET /salaries/affectations). */
+    @Transactional(readOnly = true)
+    public Map<UUID, String> nomCompletParSalarieIds(List<UUID> salarieIds) {
+        if (salarieIds.isEmpty()) {
+            return Map.of();
+        }
+        return salarieRepository.findAllById(salarieIds.stream().distinct().toList()).stream()
+            .collect(Collectors.toMap(Salarie::getId, s -> s.getPrenom() + " " + s.getNom()));
+    }
+
     /**
      * Chantier "en cours" (affectation sans date de fin) pour chaque salarié du lot —
      * à ne pas confondre avec le statut Actif/Inactif du salarié (simple interrupteur

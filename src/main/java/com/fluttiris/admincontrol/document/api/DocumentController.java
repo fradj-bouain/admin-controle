@@ -84,7 +84,8 @@ public class DocumentController {
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     public List<DocumentResponse> lister(@RequestParam(required = false) UUID salarieId,
-                                          @RequestParam(required = false) UUID entrepriseId) {
+                                          @RequestParam(required = false) UUID entrepriseId,
+                                          @RequestParam(required = false) UUID chantierId) {
         // Un compte Entreprise ne peut consulter que ses propres documents ou ceux
         // de ses propres salariés — jamais ceux d'une autre entreprise.
         boolean estEntrepriseScope = currentUser.entrepriseId().isPresent();
@@ -105,7 +106,13 @@ public class DocumentController {
             if (estClientScope && !scopeAuthz.entrepriseAccessibleParClient(scope, currentUser.clientId().get(), currentUser.keycloakId())) {
                 return List.of();
             }
-            return documentService.listerParEntreprise(scope).stream().map(DocumentResponse::from).toList();
+            // chantierId : documents propres à CE chantier uniquement (checklist "sur ce
+            // chantier"), instance indépendante des documents globaux de l'entreprise et de
+            // ses autres chantiers — voir DocumentService.listerParEntrepriseEtChantier.
+            List<Document> documents = chantierId != null
+                ? documentService.listerParEntrepriseEtChantier(scope, chantierId)
+                : documentService.listerParEntreprise(scope);
+            return documents.stream().map(DocumentResponse::from).toList();
         }
         return List.of();
     }

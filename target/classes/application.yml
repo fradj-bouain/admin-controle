@@ -46,7 +46,7 @@ spring:
 
 app:
   mail-from: ${MAIL_FROM:no-reply@admincontrol-btp.fr}
-  frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:4200}
+  frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:4300}
   documents:
     storage-dir: ${DOCUMENTS_STORAGE_DIR:./data/documents}
     taille-max-mo: ${DOCUMENTS_TAILLE_MAX_MO:10}

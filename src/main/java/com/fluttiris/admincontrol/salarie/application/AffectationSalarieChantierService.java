@@ -58,6 +58,14 @@ public class AffectationSalarieChantierService {
         return affectationSalarieRepository.findBySalarieId(salarieId);
     }
 
+    /** Toutes les affectations, tous chantiers confondus — miroir de
+        AffectationEntrepriseChantierService.listerToutes() (voir SalarieController,
+        GET /salaries/affectations). */
+    @Transactional(readOnly = true)
+    public List<AffectationSalarieChantier> listerToutes() {
+        return affectationSalarieRepository.findAll();
+    }
+
     @Transactional(readOnly = true)
     public UUID entrepriseIdDeLAffectation(UUID affectationEntrepriseChantierId) {
         return affectationEntrepriseRepository.findById(affectationEntrepriseChantierId)
@@ -80,6 +88,18 @@ public class AffectationSalarieChantierService {
     public AffectationSalarieChantier cloturer(UUID affectationId) {
         AffectationSalarieChantier affectation = obtenir(affectationId);
         affectation.cloturer();
+        return affectation;
+    }
+
+    public AffectationSalarieChantier desactiver(UUID affectationId) {
+        AffectationSalarieChantier affectation = obtenir(affectationId);
+        affectation.desactiver();
+        return affectation;
+    }
+
+    public AffectationSalarieChantier reactiver(UUID affectationId) {
+        AffectationSalarieChantier affectation = obtenir(affectationId);
+        affectation.reactiver();
         return affectation;
     }
 

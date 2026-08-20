@@ -12,7 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -60,6 +62,26 @@ public class AffectationEntrepriseChantierService {
         return affectationRepository.findByEntrepriseId(entrepriseId);
     }
 
+    /** Toutes les affectations, tous chantiers confondus — la liste transverse demandée
+        (voir EntrepriseController, GET /entreprises/affectations). N'existait pas avant :
+        chaque route existante exige un chantierId ou un entrepriseId précis en entrée. */
+    @Transactional(readOnly = true)
+    public List<AffectationEntrepriseChantier> listerToutes() {
+        return affectationRepository.findAll();
+    }
+
+    /** Résout entrepriseId pour un lot d'affectations entreprise↔chantier, en une seule
+        requête — version "batch" de entrepriseIdDeLAffectation, pour ne jamais appeler ce
+        dernier dans une boucle (voir SalarieController.listerAffectations, N+1 évité). */
+    @Transactional(readOnly = true)
+    public Map<UUID, UUID> entrepriseIdParAffectationIds(List<UUID> affectationIds) {
+        if (affectationIds.isEmpty()) {
+            return Map.of();
+        }
+        return affectationRepository.findAllById(affectationIds.stream().distinct().toList()).stream()
+            .collect(Collectors.toMap(AffectationEntrepriseChantier::getId, AffectationEntrepriseChantier::getEntrepriseId));
+    }
+
     /**
      * Désactive l'entreprise sur ce chantier ET, en cascade, tous les sous-traitants
      * qu'elle avait elle-même invités sur ce même chantier (une STT1 désactivée ne
@@ -74,6 +96,15 @@ public class AffectationEntrepriseChantierService {
         affectationRepository.findByAffectationParenteId(affectationId).stream()
             .filter(AffectationEntrepriseChantier::estActive)
             .forEach(enfant -> desactiver(enfant.getId()));
+    }
+
+    /** Volontairement sans cascade (voir AffectationEntrepriseChantier.reactiver()) : un
+        sous-traitant désactivé en même temps que son parent ne revient pas automatiquement,
+        l'ADMIN le réactive lui-même s'il le souhaite. */
+    public void reactiver(UUID affectationId) {
+        AffectationEntrepriseChantier affectation = affectationRepository.findById(affectationId)
+            .orElseThrow(() -> new EntityNotFoundException("Affectation", affectationId));
+        affectation.reactiver();
     }
 
     /**

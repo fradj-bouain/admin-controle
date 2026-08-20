@@ -73,6 +73,22 @@ public class AffectationSalarieChantierController {
         return AffectationSalarieChantierResponse.from(affectation, affectationService.entrepriseIdDeLAffectation(affectation.getAffectationEntrepriseChantierId()));
     }
 
+    @PostMapping("/{affectationId}/desactiver")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
+        + "(@currentUser.entrepriseId().isPresent() and @chantierAuthz.canManageOwnSalaries(#chantierId, @currentUser.entrepriseId().get()))")
+    public AffectationSalarieChantierResponse desactiver(@PathVariable UUID chantierId, @PathVariable UUID affectationId) {
+        var affectation = affectationService.desactiver(affectationId);
+        return AffectationSalarieChantierResponse.from(affectation, affectationService.entrepriseIdDeLAffectation(affectation.getAffectationEntrepriseChantierId()));
+    }
+
+    @PostMapping("/{affectationId}/reactiver")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
+        + "(@currentUser.entrepriseId().isPresent() and @chantierAuthz.canManageOwnSalaries(#chantierId, @currentUser.entrepriseId().get()))")
+    public AffectationSalarieChantierResponse reactiver(@PathVariable UUID chantierId, @PathVariable UUID affectationId) {
+        var affectation = affectationService.reactiver(affectationId);
+        return AffectationSalarieChantierResponse.from(affectation, affectationService.entrepriseIdDeLAffectation(affectation.getAffectationEntrepriseChantierId()));
+    }
+
     @DeleteMapping("/{affectationId}")
     @PreAuthorize("hasRole('SUPER_ADMIN') or "
         + "(@currentUser.entrepriseId().isPresent() and @chantierAuthz.canManageOwnSalaries(#chantierId, @currentUser.entrepriseId().get()))")

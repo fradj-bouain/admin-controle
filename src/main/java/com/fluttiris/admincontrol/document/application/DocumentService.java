@@ -87,6 +87,15 @@ public class DocumentService {
         return documentRepository.findByEntrepriseId(entrepriseId);
     }
 
+    /** Les documents d'une entreprise propres à un chantier précis — instance indépendante
+        de ses documents globaux et de ceux de ses autres chantiers (voir
+        DocumentRepository.findByEntrepriseIdAndChantierId : modifier/supprimer/refuser ici
+        ne touche jamais un autre chantier, chacun a sa propre ligne). */
+    @Transactional(readOnly = true)
+    public List<Document> listerParEntrepriseEtChantier(UUID entrepriseId, UUID chantierId) {
+        return documentRepository.findByEntrepriseIdAndChantierId(entrepriseId, chantierId);
+    }
+
     public Document valider(UUID id, LocalDate dateDebutValidite, LocalDate dateExpiration) {
         Document document = obtenir(id);
         typeDocumentRepository.findById(document.getTypeDocumentId()).ifPresent(type -> {

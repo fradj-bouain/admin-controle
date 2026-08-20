@@ -4,6 +4,7 @@ com\fluttiris\admincontrol\controle\api\dto\RapportControleResponse.class
 com\fluttiris\admincontrol\messagerie\application\MessageService$1.class
 com\fluttiris\admincontrol\entreprise\domain\AffectationEntrepriseChantierCreeeEvent.class
 com\fluttiris\admincontrol\controle\api\dto\ModifierControleRequest.class
+com\fluttiris\admincontrol\document\api\dto\DocumentChantierSupplementaireResponse.class
 com\fluttiris\admincontrol\document\api\dto\DocumentResponse.class
 com\fluttiris\admincontrol\chantier\domain\ChantierUtilisateur.class
 com\fluttiris\admincontrol\controle\domain\Controle.class
@@ -76,6 +77,7 @@ com\fluttiris\admincontrol\messagerie\application\RegleAutomatisationService.cla
 com\fluttiris\admincontrol\qrcode\api\QrCodeController.class
 com\fluttiris\admincontrol\document\domain\DocumentRepository.class
 com\fluttiris\admincontrol\messagerie\domain\MessageRepository.class
+com\fluttiris\admincontrol\document\api\dto\AjouterDocumentChantierSupplementaireRequest.class
 com\fluttiris\admincontrol\document\api\dto\CreateTypeDocumentRequest.class
 com\fluttiris\admincontrol\configuration\domain\ControleTiersRepository.class
 com\fluttiris\admincontrol\entreprise\api\dto\AffectationEntrepriseChantierResponse.class
@@ -84,6 +86,7 @@ com\fluttiris\admincontrol\configuration\domain\CorpsDeMetierRepository.class
 com\fluttiris\admincontrol\auth\api\dto\LoginRequest.class
 com\fluttiris\admincontrol\messagerie\api\RegleAutomatisationController.class
 com\fluttiris\admincontrol\auth\api\AuthController.class
+com\fluttiris\admincontrol\document\domain\DocumentChantierSupplementaireRepository.class
 com\fluttiris\admincontrol\configuration\domain\TypeSalarie.class
 com\fluttiris\admincontrol\client\application\ClientService.class
 com\fluttiris\admincontrol\configuration\api\dto\CreateCorpsDeMetierRequest.class
@@ -105,6 +108,7 @@ com\fluttiris\admincontrol\document\domain\StatutValidation.class
 com\fluttiris\admincontrol\entreprise\api\AffectationEntrepriseChantierController.class
 com\fluttiris\admincontrol\client\domain\Client.class
 com\fluttiris\admincontrol\messagerie\api\dto\ChampSurveillableResponse.class
+com\fluttiris\admincontrol\document\api\DocumentChantierSupplementaireController.class
 com\fluttiris\admincontrol\messagerie\domain\EvenementDetecte.class
 com\fluttiris\admincontrol\messagerie\application\ChampSurveillableRegistry.class
 com\fluttiris\admincontrol\client\domain\ClientRepository.class
@@ -115,6 +119,7 @@ com\fluttiris\admincontrol\auth\domain\UtilisateurRepository.class
 com\fluttiris\admincontrol\common\audit\HistoriqueModificationRepository.class
 com\fluttiris\admincontrol\configuration\domain\CorpsDeMetier.class
 com\fluttiris\admincontrol\configuration\api\dto\CreateActionCorrectiveRequest.class
+com\fluttiris\admincontrol\document\application\DocumentChantierSupplementaireService.class
 com\fluttiris\admincontrol\messagerie\application\PlanificationService.class
 com\fluttiris\admincontrol\chantier\api\ChantierUtilisateurController.class
 com\fluttiris\admincontrol\auth\api\UtilisateurController.class
@@ -195,6 +200,7 @@ com\fluttiris\admincontrol\qrcode\application\QrCodeService$VerificationResult.c
 com\fluttiris\admincontrol\entreprise\domain\RoleEntreprise.class
 com\fluttiris\admincontrol\messagerie\application\AutomatisationEvenementListener.class
 com\fluttiris\admincontrol\document\api\dto\TypeDocumentResponse.class
+com\fluttiris\admincontrol\document\domain\DocumentChantierSupplementaire.class
 com\fluttiris\admincontrol\messagerie\api\dto\RegleAutomatisationResponse.class
 com\fluttiris\admincontrol\configuration\domain\TypeContratSalarie.class
 com\fluttiris\admincontrol\controle\api\ControleController.class

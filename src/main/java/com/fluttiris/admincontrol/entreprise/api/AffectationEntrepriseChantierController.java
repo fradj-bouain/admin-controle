@@ -71,6 +71,13 @@ public class AffectationEntrepriseChantierController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/{affectationId}/reactiver")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<Void> reactiver(@PathVariable UUID chantierId, @PathVariable UUID affectationId) {
+        affectationService.reactiver(affectationId);
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/{affectationId}")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Void> supprimer(@PathVariable UUID chantierId, @PathVariable UUID affectationId) {

@@ -1,11 +1,14 @@
 package com.fluttiris.admincontrol.salarie.api;
 
 import com.fluttiris.admincontrol.chantier.application.ChantierService;
+import com.fluttiris.admincontrol.entreprise.application.AffectationEntrepriseChantierService;
+import com.fluttiris.admincontrol.entreprise.application.EntrepriseService;
 import com.fluttiris.admincontrol.salarie.api.dto.AffectationSalarieChantierResponse;
 import com.fluttiris.admincontrol.salarie.api.dto.CreateSalarieRequest;
 import com.fluttiris.admincontrol.salarie.api.dto.SalarieResponse;
 import com.fluttiris.admincontrol.salarie.application.AffectationSalarieChantierService;
 import com.fluttiris.admincontrol.salarie.application.SalarieService;
+import com.fluttiris.admincontrol.salarie.domain.AffectationSalarieChantier;
 import com.fluttiris.admincontrol.salarie.domain.Salarie;
 import com.fluttiris.admincontrol.common.security.CurrentUser;
 import jakarta.validation.Valid;
@@ -16,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -25,6 +29,8 @@ public class SalarieController {
 
     private final SalarieService salarieService;
     private final AffectationSalarieChantierService affectationSalarieChantierService;
+    private final AffectationEntrepriseChantierService affectationEntrepriseChantierService;
+    private final EntrepriseService entrepriseService;
     private final ChantierService chantierService;
     private final CurrentUser currentUser;
 
@@ -126,5 +132,34 @@ public class SalarieController {
             affectations = affectations.stream().filter(a -> chantierIdsAccessibles.contains(a.chantierId())).toList();
         }
         return affectations;
+    }
+
+    /** Miroir de EntrepriseController.listerAffectations() — la liste transverse, une ligne
+        par affectation salarié↔chantier, tous chantiers confondus. Réservée SUPER_ADMIN,
+        même raisonnement de fuite d'information. Toute résolution de nom se fait en lot
+        (une requête par type de nom, jamais par ligne) pour rester à un nombre de requêtes
+        constant quel que soit le nombre d'affectations. */
+    @GetMapping("/affectations")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public List<AffectationSalarieChantierResponse> listerAffectations() {
+        List<AffectationSalarieChantier> affectations = affectationSalarieChantierService.listerToutes();
+
+        Map<UUID, String> nomSalarieParId = salarieService.nomCompletParSalarieIds(
+            affectations.stream().map(AffectationSalarieChantier::getSalarieId).toList());
+        Map<UUID, String> nomChantierParId = chantierService.nomParChantierIds(
+            affectations.stream().map(AffectationSalarieChantier::getChantierId).toList());
+        Map<UUID, UUID> entrepriseIdParAffectationEntrepriseId = affectationEntrepriseChantierService.entrepriseIdParAffectationIds(
+            affectations.stream().map(AffectationSalarieChantier::getAffectationEntrepriseChantierId).toList());
+        Map<UUID, String> nomEntrepriseParId = entrepriseService.raisonSocialeParEntrepriseIds(
+            entrepriseIdParAffectationEntrepriseId.values().stream().toList());
+
+        return affectations.stream()
+            .map(a -> {
+                UUID entrepriseId = entrepriseIdParAffectationEntrepriseId.get(a.getAffectationEntrepriseChantierId());
+                return AffectationSalarieChantierResponse.from(a, entrepriseId,
+                    nomSalarieParId.get(a.getSalarieId()), nomChantierParId.get(a.getChantierId()),
+                    entrepriseId != null ? nomEntrepriseParId.get(entrepriseId) : null);
+            })
+            .toList();
     }
 }

@@ -17,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -146,5 +147,25 @@ public class EntrepriseController {
             affectations = affectations.stream().filter(a -> chantierIdsAccessibles.contains(a.getChantierId())).toList();
         }
         return affectations.stream().map(AffectationEntrepriseChantierResponse::from).toList();
+    }
+
+    /** La liste transverse demandée : une ligne par affectation, tous chantiers confondus —
+        n'existait pas avant (toutes les routes existantes exigent un chantierId ou un
+        entrepriseId précis). Réservée SUPER_ADMIN : elle expose, pour chaque entreprise,
+        sur quels chantiers (potentiellement d'autres clients) elle intervient — la même
+        fuite d'information que EntrepriseController.listerChantiers() protège déjà côté
+        Client, ici évitée en ne l'ouvrant à personne d'autre que l'ADMIN. */
+    @GetMapping("/affectations")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public List<AffectationEntrepriseChantierResponse> listerAffectations() {
+        List<AffectationEntrepriseChantier> affectations = affectationEntrepriseChantierService.listerToutes();
+        Map<UUID, String> raisonSocialeParId = entrepriseService.raisonSocialeParEntrepriseIds(
+            affectations.stream().map(AffectationEntrepriseChantier::getEntrepriseId).toList());
+        Map<UUID, String> nomChantierParId = chantierService.nomParChantierIds(
+            affectations.stream().map(AffectationEntrepriseChantier::getChantierId).toList());
+        return affectations.stream()
+            .map(a -> AffectationEntrepriseChantierResponse.from(a,
+                raisonSocialeParId.get(a.getEntrepriseId()), nomChantierParId.get(a.getChantierId())))
+            .toList();
     }
 }

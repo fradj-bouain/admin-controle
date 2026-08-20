@@ -100,6 +100,15 @@ public class AffectationEntrepriseChantier extends Auditable {
         this.dateFin = LocalDate.now();
     }
 
+    /** Rouvre une affectation précédemment désactivée — n'existait pas avant. Volontairement
+        SANS cascade vers les sous-traitants désactivés en même temps qu'elle (voir
+        AffectationEntrepriseChantierService.desactiver()) : chacun se réactive séparément,
+        pour ne pas réintroduire un sous-traitant que l'ADMIN n'a pas explicitement validé. */
+    public void reactiver() {
+        this.statut = "ACTIF";
+        this.dateFin = null;
+    }
+
     public boolean estActive() {
         return "ACTIF".equals(statut);
     }

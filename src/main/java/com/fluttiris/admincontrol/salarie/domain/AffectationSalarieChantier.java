@@ -48,6 +48,13 @@ public class AffectationSalarieChantier extends Auditable {
     @Column(name = "date_fin")
     private LocalDate dateFin;
 
+    /** Statut d'ENGAGEMENT sur ce chantier (ce salarié y travaille-t-il actuellement ?) —
+        distinct de statutAcces ci-dessous (l'administratif est-il en règle pour y accéder ?).
+        Les deux axes sont indépendants : un salarié peut être ACTIF ici alors que son accès
+        est encore EN_ATTENTE (badge pas encore édité), voir AffectationSalarieChantierService. */
+    @Column(nullable = false)
+    private String statut = "ACTIF";
+
     @Enumerated(EnumType.STRING)
     @Column(name = "statut_acces", nullable = false)
     private StatutAcces statutAcces = StatutAcces.EN_ATTENTE;
@@ -88,8 +95,30 @@ public class AffectationSalarieChantier extends Auditable {
         this.motifRefus = motif;
     }
 
+    /** Conservée pour compatibilité (appelée historiquement en fin d'affectation) — se comporte
+        désormais exactement comme désactiver(), voir plus bas. */
     public void cloturer() {
+        desactiver();
+    }
+
+    /** Miroir de AffectationEntrepriseChantier.desactiver() : ne modifie que CETTE ligne,
+        jamais le salarié ni son entreprise. */
+    public void desactiver() {
+        this.statut = "INACTIF";
         this.dateFin = LocalDate.now();
+    }
+
+    /** Rouvre une affectation précédemment désactivée — n'existait pas avant (l'ancien
+        cloturer() était à sens unique), demandé explicitement pour ne pas perdre le lien
+        avec l'historique (dates, EPI, présence déjà enregistrés) d'un salarié qui revient
+        sur un chantier qu'il avait quitté. */
+    public void reactiver() {
+        this.statut = "ACTIF";
+        this.dateFin = null;
+    }
+
+    public boolean estActive() {
+        return "ACTIF".equals(statut);
     }
 
     public void majSuivi(boolean epiGants, boolean epiCasque, boolean epiChaussures, boolean badgeEdite, boolean present) {
