@@ -82,6 +82,15 @@ public class DocumentService {
         return documentRepository.findBySalarieId(salarieId);
     }
 
+    /** Les documents d'un salarié propres à un chantier précis — instance indépendante de
+        ses documents globaux et de ceux de ses autres chantiers (voir
+        DocumentRepository.findBySalarieIdAndChantierId : modifier/supprimer/refuser ici ne
+        touche jamais un autre chantier, chacun a sa propre ligne). */
+    @Transactional(readOnly = true)
+    public List<Document> listerParSalarieEtChantier(UUID salarieId, UUID chantierId) {
+        return documentRepository.findBySalarieIdAndChantierId(salarieId, chantierId);
+    }
+
     @Transactional(readOnly = true)
     public List<Document> listerParEntreprise(UUID entrepriseId) {
         return documentRepository.findByEntrepriseId(entrepriseId);
@@ -149,28 +158,41 @@ public class DocumentService {
         }
     }
 
+    /** chantierId : même principe que listerParEntrepriseEtChantier/listerParSalarieEtChantier
+        — un salarié/une entreprise sur plusieurs chantiers a des documents indépendants par
+        chantier, donc son historique doit l'être aussi (sinon l'historique du chantier A
+        montre aussi les créations/validations/refus survenus sur le chantier B). Null =
+        comportement global inchangé (tous chantiers confondus). */
     @Transactional(readOnly = true)
-    public List<HistoriqueModificationResponse> listerHistoriqueParSalarie(UUID salarieId) {
-        List<UUID> documentIds = documentRepository.findBySalarieId(salarieId).stream().map(Document::getId).toList();
-        return historiqueService.listerPour(ENTITE, documentIds);
+    public List<HistoriqueModificationResponse> listerHistoriqueParSalarie(UUID salarieId, UUID chantierId) {
+        List<Document> documents = chantierId != null
+            ? documentRepository.findBySalarieIdAndChantierId(salarieId, chantierId)
+            : documentRepository.findBySalarieId(salarieId);
+        return historiqueService.listerPour(ENTITE, documents.stream().map(Document::getId).toList());
     }
 
     @Transactional(readOnly = true)
-    public List<HistoriqueModificationResponse> listerHistoriqueParEntreprise(UUID entrepriseId) {
-        List<UUID> documentIds = documentRepository.findByEntrepriseId(entrepriseId).stream().map(Document::getId).toList();
-        return historiqueService.listerPour(ENTITE, documentIds);
+    public List<HistoriqueModificationResponse> listerHistoriqueParEntreprise(UUID entrepriseId, UUID chantierId) {
+        List<Document> documents = chantierId != null
+            ? documentRepository.findByEntrepriseIdAndChantierId(entrepriseId, chantierId)
+            : documentRepository.findByEntrepriseId(entrepriseId);
+        return historiqueService.listerPour(ENTITE, documents.stream().map(Document::getId).toList());
     }
 
     @Transactional(readOnly = true)
-    public List<MessagePlanifieResponse> listerRelancesParSalarie(UUID salarieId) {
-        List<UUID> documentIds = documentRepository.findBySalarieId(salarieId).stream().map(Document::getId).toList();
-        return listerRelancesPour(documentIds);
+    public List<MessagePlanifieResponse> listerRelancesParSalarie(UUID salarieId, UUID chantierId) {
+        List<Document> documents = chantierId != null
+            ? documentRepository.findBySalarieIdAndChantierId(salarieId, chantierId)
+            : documentRepository.findBySalarieId(salarieId);
+        return listerRelancesPour(documents.stream().map(Document::getId).toList());
     }
 
     @Transactional(readOnly = true)
-    public List<MessagePlanifieResponse> listerRelancesParEntreprise(UUID entrepriseId) {
-        List<UUID> documentIds = documentRepository.findByEntrepriseId(entrepriseId).stream().map(Document::getId).toList();
-        return listerRelancesPour(documentIds);
+    public List<MessagePlanifieResponse> listerRelancesParEntreprise(UUID entrepriseId, UUID chantierId) {
+        List<Document> documents = chantierId != null
+            ? documentRepository.findByEntrepriseIdAndChantierId(entrepriseId, chantierId)
+            : documentRepository.findByEntrepriseId(entrepriseId);
+        return listerRelancesPour(documents.stream().map(Document::getId).toList());
     }
 
     private List<MessagePlanifieResponse> listerRelancesPour(List<UUID> documentIds) {

@@ -23,7 +23,10 @@ public record AffectationEntrepriseChantierResponse(
     UUID affectationParenteId,
     LocalDate dateDebut,
     LocalDate dateFin,
-    String statut
+    String statut,
+    // Email de contact propre à CETTE relation (entreprise, chantier) — voir
+    // AffectationEntrepriseChantier.emailContact. Null = pas de contact spécifique.
+    String emailContact
 ) {
     public static AffectationEntrepriseChantierResponse from(AffectationEntrepriseChantier a) {
         return from(a, null);
@@ -36,6 +39,7 @@ public record AffectationEntrepriseChantierResponse(
     public static AffectationEntrepriseChantierResponse from(AffectationEntrepriseChantier a, String raisonSocialeEntreprise,
                                                                String nomChantier) {
         return new AffectationEntrepriseChantierResponse(a.getId(), a.getChantierId(), nomChantier, a.getEntrepriseId(),
-            raisonSocialeEntreprise, a.getRole(), a.getAffectationParenteId(), a.getDateDebut(), a.getDateFin(), a.getStatut());
+            raisonSocialeEntreprise, a.getRole(), a.getAffectationParenteId(), a.getDateDebut(), a.getDateFin(), a.getStatut(),
+            a.getEmailContact());
     }
 }

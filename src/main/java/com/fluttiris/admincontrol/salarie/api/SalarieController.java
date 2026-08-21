@@ -135,12 +135,16 @@ public class SalarieController {
     }
 
     /** Miroir de EntrepriseController.listerAffectations() — la liste transverse, une ligne
-        par affectation salarié↔chantier, tous chantiers confondus. Réservée SUPER_ADMIN,
-        même raisonnement de fuite d'information. Toute résolution de nom se fait en lot
-        (une requête par type de nom, jamais par ligne) pour rester à un nombre de requêtes
-        constant quel que soit le nombre d'affectations. */
+        par affectation salarié↔chantier, tous chantiers confondus. Ouverte à tout compte
+        authentifié, filtrée au même périmètre tenant que {@link #lister()} : une Entreprise
+        ne voit que SES salariés, un Client que ses chantiers accessibles — sans ce filtre,
+        n'importe quel compte authentifié verrait les affectations de N'IMPORTE quelle autre
+        entreprise/quel autre client. SUPER_ADMIN et les rôles sans tenant (Contrôleur)
+        gardent la vue complète. Toute résolution de nom se fait en lot (une requête par type
+        de nom, jamais par ligne) pour rester à un nombre de requêtes constant quel que soit
+        le nombre d'affectations. */
     @GetMapping("/affectations")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public List<AffectationSalarieChantierResponse> listerAffectations() {
         List<AffectationSalarieChantier> affectations = affectationSalarieChantierService.listerToutes();
 
@@ -152,6 +156,17 @@ public class SalarieController {
             affectations.stream().map(AffectationSalarieChantier::getAffectationEntrepriseChantierId).toList());
         Map<UUID, String> nomEntrepriseParId = entrepriseService.raisonSocialeParEntrepriseIds(
             entrepriseIdParAffectationEntrepriseId.values().stream().toList());
+
+        if (currentUser.entrepriseId().isPresent()) {
+            UUID monEntrepriseId = currentUser.entrepriseId().get();
+            affectations = affectations.stream()
+                .filter(a -> monEntrepriseId.equals(entrepriseIdParAffectationEntrepriseId.get(a.getAffectationEntrepriseChantierId())))
+                .toList();
+        } else if (currentUser.clientId().isPresent()) {
+            List<UUID> chantierIdsAccessibles = chantierService.listerIdsAccessiblesPourClient(
+                currentUser.clientId().get(), currentUser.keycloakId());
+            affectations = affectations.stream().filter(a -> chantierIdsAccessibles.contains(a.getChantierId())).toList();
+        }
 
         return affectations.stream()
             .map(a -> {

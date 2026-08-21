@@ -60,6 +60,14 @@ public class AffectationEntrepriseChantier extends Auditable {
     @Column(nullable = false)
     private String statut = "ACTIF";
 
+    /** Email de contact propre à CETTE relation (entreprise, chantier), distinct de
+        l'email principal de l'entreprise ({@code Entreprise.email}) — voir le modèle
+        validé "chaque chantier peut avoir son propre contact, comme si c'était une
+        nouvelle entreprise sans en être une". Optionnel : null = pas de contact
+        spécifique, on retombe sur l'email principal de l'entreprise. */
+    @Column(name = "email_contact")
+    private String emailContact;
+
     /**
      * @param parente l'affectation du parent SUR CE MÊME CHANTIER, requise pour STT1/STT2,
      *                interdite pour PRINCIPALE. La cohérence hiérarchique (STT1 doit avoir
@@ -111,6 +119,10 @@ public class AffectationEntrepriseChantier extends Auditable {
 
     public boolean estActive() {
         return "ACTIF".equals(statut);
+    }
+
+    public void modifierEmailContact(String emailContact) {
+        this.emailContact = emailContact;
     }
 
     /** Une Principale ou un STT1 peuvent gérer des sous-traitants ; un STT2 ne peut gérer que ses salariés. */

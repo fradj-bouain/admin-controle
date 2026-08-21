@@ -29,6 +29,10 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
         chantiers, chacun ayant sa propre instance de document (voir DocumentChantierSupplementaire). */
     List<Document> findByEntrepriseIdAndChantierId(UUID entrepriseId, UUID chantierId);
 
+    /** Même principe que {@link #findByEntrepriseIdAndChantierId}, côté salarié — instance
+        indépendante par chantier, jamais partagée entre deux chantiers d'un même salarié. */
+    List<Document> findBySalarieIdAndChantierId(UUID salarieId, UUID chantierId);
+
     /** Résolution en lot du nombre de documents déposés par affectation, pour la liste
         transverse "Affectations" (GET /entreprises/affectations) — un seul aller-retour,
         regroupé ensuite en mémoire par (entrepriseId, chantierId), jamais une requête par

@@ -107,6 +107,7 @@ com\fluttiris\admincontrol\salarie\api\dto\SalarieResponse.class
 com\fluttiris\admincontrol\document\domain\StatutValidation.class
 com\fluttiris\admincontrol\entreprise\api\AffectationEntrepriseChantierController.class
 com\fluttiris\admincontrol\client\domain\Client.class
+com\fluttiris\admincontrol\entreprise\api\dto\ModifierEmailContactRequest.class
 com\fluttiris\admincontrol\messagerie\api\dto\ChampSurveillableResponse.class
 com\fluttiris\admincontrol\document\api\DocumentChantierSupplementaireController.class
 com\fluttiris\admincontrol\messagerie\domain\EvenementDetecte.class

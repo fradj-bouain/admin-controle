@@ -99,7 +99,13 @@ public class DocumentController {
             if (estClientScope && !scopeAuthz.salarieAccessibleParClient(salarieId, currentUser.clientId().get(), currentUser.keycloakId())) {
                 return List.of();
             }
-            return documentService.listerParSalarie(salarieId).stream().map(DocumentResponse::from).toList();
+            // chantierId : documents propres à CE chantier uniquement (checklist "sur ce
+            // chantier"), instance indépendante des documents globaux du salarié et de ses
+            // autres chantiers — voir DocumentService.listerParSalarieEtChantier.
+            List<Document> documentsSalarie = chantierId != null
+                ? documentService.listerParSalarieEtChantier(salarieId, chantierId)
+                : documentService.listerParSalarie(salarieId);
+            return documentsSalarie.stream().map(DocumentResponse::from).toList();
         }
         UUID scope = estEntrepriseScope ? currentUser.entrepriseId().get() : entrepriseId;
         if (scope != null) {
@@ -151,12 +157,13 @@ public class DocumentController {
         + "(#salarieId != null and @currentUser.entrepriseId().isPresent() and @scopeAuthz.salarieAppartientAEntreprise(#salarieId, @currentUser.entrepriseId().get())) or "
         + "(#entrepriseId != null and @currentUser.entrepriseId().isPresent() and @currentUser.entrepriseId().get().equals(#entrepriseId))")
     public List<HistoriqueModificationResponse> historique(@RequestParam(required = false) UUID salarieId,
-                                                             @RequestParam(required = false) UUID entrepriseId) {
+                                                             @RequestParam(required = false) UUID entrepriseId,
+                                                             @RequestParam(required = false) UUID chantierId) {
         if (salarieId != null) {
-            return documentService.listerHistoriqueParSalarie(salarieId);
+            return documentService.listerHistoriqueParSalarie(salarieId, chantierId);
         }
         if (entrepriseId != null) {
-            return documentService.listerHistoriqueParEntreprise(entrepriseId);
+            return documentService.listerHistoriqueParEntreprise(entrepriseId, chantierId);
         }
         return List.of();
     }
@@ -166,12 +173,13 @@ public class DocumentController {
         + "(#salarieId != null and @currentUser.entrepriseId().isPresent() and @scopeAuthz.salarieAppartientAEntreprise(#salarieId, @currentUser.entrepriseId().get())) or "
         + "(#entrepriseId != null and @currentUser.entrepriseId().isPresent() and @currentUser.entrepriseId().get().equals(#entrepriseId))")
     public List<MessagePlanifieResponse> relances(@RequestParam(required = false) UUID salarieId,
-                                                   @RequestParam(required = false) UUID entrepriseId) {
+                                                   @RequestParam(required = false) UUID entrepriseId,
+                                                   @RequestParam(required = false) UUID chantierId) {
         if (salarieId != null) {
-            return documentService.listerRelancesParSalarie(salarieId);
+            return documentService.listerRelancesParSalarie(salarieId, chantierId);
         }
         if (entrepriseId != null) {
-            return documentService.listerRelancesParEntreprise(entrepriseId);
+            return documentService.listerRelancesParEntreprise(entrepriseId, chantierId);
         }
         return List.of();
     }

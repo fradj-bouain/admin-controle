@@ -82,6 +82,16 @@ public class AffectationEntrepriseChantierService {
             .collect(Collectors.toMap(AffectationEntrepriseChantier::getId, AffectationEntrepriseChantier::getEntrepriseId));
     }
 
+    /** Email de contact propre à cette relation (entreprise, chantier) — voir
+        AffectationEntrepriseChantier.emailContact. Stocké pour l'instant, pas encore
+        utilisé pour router un envoi réel (voir MessageService.envoyer). */
+    public AffectationEntrepriseChantier modifierEmailContact(UUID affectationId, String emailContact) {
+        AffectationEntrepriseChantier affectation = affectationRepository.findById(affectationId)
+            .orElseThrow(() -> new EntityNotFoundException("Affectation", affectationId));
+        affectation.modifierEmailContact(emailContact);
+        return affectation;
+    }
+
     /**
      * Désactive l'entreprise sur ce chantier ET, en cascade, tous les sous-traitants
      * qu'elle avait elle-même invités sur ce même chantier (une STT1 désactivée ne
