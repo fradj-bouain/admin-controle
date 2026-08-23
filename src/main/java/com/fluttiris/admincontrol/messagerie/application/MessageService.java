@@ -31,6 +31,21 @@ public class MessageService {
         return messageRepository.findByDestinataireTypeAndDestinataireIdOrderByCreatedAtDesc(type, destinataireId);
     }
 
+    /** Historique des messages pour une fiche (Entreprise/Client), pas pour la boîte de
+        réception d'un compte — voir MessageController.historique. chantierId optionnel filtre
+        au contexte d'un chantier précis (même principe que documents/historique de documents) ;
+        salarieId optionnel filtre en plus aux messages composés depuis la fiche de CE salarié
+        précis (voir Message.salarieId, toujours renseigné depuis SalarieDetailComponent). */
+    @Transactional(readOnly = true)
+    public List<Message> historique(DestinataireType type, UUID destinataireId, UUID chantierId, UUID salarieId) {
+        List<Message> messages = chantierId != null
+            ? messageRepository.findByDestinataireTypeAndDestinataireIdAndChantierIdOrderByCreatedAtDesc(type, destinataireId, chantierId)
+            : messageRepository.findByDestinataireTypeAndDestinataireIdOrderByCreatedAtDesc(type, destinataireId);
+        return salarieId != null
+            ? messages.stream().filter(m -> salarieId.equals(m.getSalarieId())).toList()
+            : messages;
+    }
+
     @Transactional(readOnly = true)
     public List<Message> messagesEnvoyes(UUID expediteurId) {
         return messageRepository.findByExpediteurUtilisateurIdOrderByCreatedAtDesc(expediteurId);

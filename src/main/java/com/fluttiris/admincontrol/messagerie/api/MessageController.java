@@ -61,6 +61,25 @@ public class MessageController {
         return messageService.messagesEnvoyes(currentUser.keycloakId()).stream().map(MessageResponse::from).toList();
     }
 
+    /** Historique des messages pour une fiche (Entreprise/Client/Salarié — un salarié n'a
+        pas de destinataireType propre, voir salarieId), pas la boîte de réception d'un
+        compte — GET /boite-reception ci-dessus reste inchangé pour cet usage-là. Un compte
+        Entreprise/Client ne peut consulter que SON propre historique, même s'il passe un
+        autre destinataireId en paramètre — sinon n'importe quel compte authentifié pourrait
+        lire les messages de n'importe quelle autre entreprise/n'importe quel autre client en
+        devinant son id. SUPER_ADMIN et les rôles sans tenant (Contrôleur) gardent l'accès complet. */
+    @GetMapping("/historique")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or "
+        + "(@currentUser.entrepriseId().isEmpty() and @currentUser.clientId().isEmpty()) or "
+        + "(#destinataireType.name() == 'ENTREPRISE' and @currentUser.entrepriseId().isPresent() and @currentUser.entrepriseId().get().equals(#destinataireId)) or "
+        + "(#destinataireType.name() == 'CLIENT' and @currentUser.clientId().isPresent() and @currentUser.clientId().get().equals(#destinataireId))")
+    public List<MessageResponse> historique(@RequestParam DestinataireType destinataireType, @RequestParam UUID destinataireId,
+                                             @RequestParam(required = false) UUID chantierId,
+                                             @RequestParam(required = false) UUID salarieId) {
+        return messageService.historique(destinataireType, destinataireId, chantierId, salarieId).stream()
+            .map(MessageResponse::from).toList();
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public MessageResponse obtenir(@PathVariable UUID id) {
