@@ -82,13 +82,14 @@ public class AffectationEntrepriseChantierService {
             .collect(Collectors.toMap(AffectationEntrepriseChantier::getId, AffectationEntrepriseChantier::getEntrepriseId));
     }
 
-    /** Email de contact propre à cette relation (entreprise, chantier) — voir
-        AffectationEntrepriseChantier.emailContact. Stocké pour l'instant, pas encore
-        utilisé pour router un envoi réel (voir MessageService.envoyer). */
-    public AffectationEntrepriseChantier modifierEmailContact(UUID affectationId, String emailContact) {
+    /** Coordonnées de contact propres à cette relation (entreprise, chantier) — voir
+        AffectationEntrepriseChantier.modifierCoordonneesContact. Stockées pour l'instant,
+        pas encore utilisées pour router un envoi réel (voir MessageService.envoyer). */
+    public AffectationEntrepriseChantier modifierCoordonneesContact(UUID affectationId, String emailContact,
+                                                                      String telephoneContact, String adresseContact) {
         AffectationEntrepriseChantier affectation = affectationRepository.findById(affectationId)
             .orElseThrow(() -> new EntityNotFoundException("Affectation", affectationId));
-        affectation.modifierEmailContact(emailContact);
+        affectation.modifierCoordonneesContact(emailContact, telephoneContact, adresseContact);
         return affectation;
     }
 

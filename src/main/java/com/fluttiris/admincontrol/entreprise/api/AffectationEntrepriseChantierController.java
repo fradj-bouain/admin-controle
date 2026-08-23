@@ -2,7 +2,7 @@ package com.fluttiris.admincontrol.entreprise.api;
 
 import com.fluttiris.admincontrol.entreprise.api.dto.AffectationEntrepriseChantierResponse;
 import com.fluttiris.admincontrol.entreprise.api.dto.AffecterEntrepriseRequest;
-import com.fluttiris.admincontrol.entreprise.api.dto.ModifierEmailContactRequest;
+import com.fluttiris.admincontrol.entreprise.api.dto.ModifierCoordonneesContactRequest;
 import com.fluttiris.admincontrol.entreprise.application.AffectationEntrepriseChantierService;
 import com.fluttiris.admincontrol.entreprise.application.EntrepriseService;
 import com.fluttiris.admincontrol.entreprise.domain.AffectationEntrepriseChantier;
@@ -79,14 +79,16 @@ public class AffectationEntrepriseChantierController {
         return ResponseEntity.noContent().build();
     }
 
-    // Stocke un email de contact propre à cette relation (entreprise, chantier) — voir
-    // AffectationEntrepriseChantier.emailContact. Ne déclenche aucun envoi réel pour
-    // l'instant (voir MessageService.envoyer, jamais branché sur EmailService/SMTP).
-    @PatchMapping("/{affectationId}/email-contact")
+    // Stocke email/téléphone/adresse de contact propres à cette relation (entreprise,
+    // chantier) — voir AffectationEntrepriseChantier.modifierCoordonneesContact. Ne
+    // déclenche aucun envoi réel pour l'instant (voir MessageService.envoyer, jamais
+    // branché sur EmailService/SMTP).
+    @PatchMapping("/{affectationId}/coordonnees-contact")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public AffectationEntrepriseChantierResponse modifierEmailContact(
-        @PathVariable UUID chantierId, @PathVariable UUID affectationId, @RequestBody ModifierEmailContactRequest request) {
-        var affectation = affectationService.modifierEmailContact(affectationId, request.emailContact());
+    public AffectationEntrepriseChantierResponse modifierCoordonneesContact(
+        @PathVariable UUID chantierId, @PathVariable UUID affectationId, @RequestBody ModifierCoordonneesContactRequest request) {
+        var affectation = affectationService.modifierCoordonneesContact(
+            affectationId, request.emailContact(), request.telephoneContact(), request.adresseContact());
         return AffectationEntrepriseChantierResponse.from(affectation);
     }
 

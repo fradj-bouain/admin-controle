@@ -136,7 +136,7 @@ C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\ad
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\entreprise\api\dto\AffecterEntrepriseRequest.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\entreprise\api\dto\CreateEntrepriseRequest.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\entreprise\api\dto\EntrepriseResponse.java
-C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\entreprise\api\dto\ModifierEmailContactRequest.java
+C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\entreprise\api\dto\ModifierCoordonneesContactRequest.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\entreprise\api\EntrepriseController.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\entreprise\application\AffectationEntrepriseChantierService.java
 C:\Users\ZBook\Desktop\Projects\fluttiris\backend\src\main\java\com\fluttiris\admincontrol\entreprise\application\ChantierAuthorizationService.java

@@ -66,7 +66,8 @@ public class SalarieController {
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public List<SalarieResponse> lister(@RequestParam(required = false) UUID entrepriseId) {
+    public List<SalarieResponse> lister(@RequestParam(required = false) UUID entrepriseId,
+                                         @RequestParam(required = false) UUID chantierId) {
         // Un compte Client est un tenant : uniquement les salariés affectés aux chantiers
         // qui lui ont été explicitement assignés (voir ChantierService.listerAccessiblesPourClient) —
         // aucun chantier assigné = aucun salarié visible.
@@ -76,6 +77,14 @@ public class SalarieController {
         // Un compte Entreprise est toujours ramené à SON propre périmètre, même
         // s'il passe un autre entrepriseId en paramètre.
         UUID scope = currentUser.entrepriseId().orElse(entrepriseId);
+        // chantierId optionnel : quand fourni avec un scope entreprise, filtre au contexte
+        // "Entreprise + Chantier" (règle validée) au lieu de toute l'entreprise tous chantiers
+        // confondus — voir SalarieService.listerParEntrepriseEtChantier. null = comportement
+        // inchangé (toute l'entreprise), utilisé par les écrans qui n'ont pas de chantier en
+        // contexte (tableau de bord, formulaires de rapport, etc.).
+        if (scope != null && chantierId != null) {
+            return avecChantierActuel(salarieService.listerParEntrepriseEtChantier(scope, chantierId));
+        }
         if (scope != null) {
             return avecChantierActuel(salarieService.lister(scope));
         }

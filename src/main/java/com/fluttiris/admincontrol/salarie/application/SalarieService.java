@@ -4,6 +4,8 @@ import com.fluttiris.admincontrol.chantier.application.ChantierService;
 import com.fluttiris.admincontrol.chantier.domain.Chantier;
 import com.fluttiris.admincontrol.chantier.domain.ChantierRepository;
 import com.fluttiris.admincontrol.common.exception.EntityNotFoundException;
+import com.fluttiris.admincontrol.entreprise.domain.AffectationEntrepriseChantier;
+import com.fluttiris.admincontrol.entreprise.domain.AffectationEntrepriseChantierRepository;
 import com.fluttiris.admincontrol.salarie.domain.AffectationSalarieChantier;
 import com.fluttiris.admincontrol.salarie.domain.AffectationSalarieChantierRepository;
 import com.fluttiris.admincontrol.salarie.domain.Salarie;
@@ -31,6 +33,7 @@ public class SalarieService {
     private final ChantierService chantierService;
     private final ChantierRepository chantierRepository;
     private final AffectationSalarieChantierRepository affectationSalarieChantierRepository;
+    private final AffectationEntrepriseChantierRepository affectationEntrepriseChantierRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     public Salarie creer(String nom, String prenom, LocalDate dateNaissance, UUID nationalitePaysId,
@@ -61,6 +64,31 @@ public class SalarieService {
         return entrepriseId != null
             ? salarieRepository.findByEntrepriseEmployeurId(entrepriseId)
             : salarieRepository.findAll();
+    }
+
+    /** Salariés de cette entreprise, filtrés au contexte d'UN chantier précis — règle validée
+        "Entreprise + Chantier = contexte d'affectation" : un salarié affecté à cette entreprise
+        sur le chantier Sousse ne doit jamais apparaître quand la même entreprise est consultée
+        dans le contexte du chantier Tunis, même s'il reste employé (entrepriseEmployeurId) de
+        cette même entreprise. Passe par affectation_entreprise_chantier puis
+        affectation_salarie_chantier (jamais entrepriseId seul, voir {@link #lister(UUID)}) :
+        une même entreprise peut porter plusieurs rôles sur ce même chantier (Principale ET
+        STT1), donc plusieurs affectationEntrepriseChantierId comptent toutes pour ce chantier. */
+    @Transactional(readOnly = true)
+    public List<Salarie> listerParEntrepriseEtChantier(UUID entrepriseId, UUID chantierId) {
+        List<UUID> affectationEntrepriseChantierIds = affectationEntrepriseChantierRepository
+            .findByChantierIdAndEntrepriseId(chantierId, entrepriseId).stream()
+            .map(AffectationEntrepriseChantier::getId)
+            .toList();
+        if (affectationEntrepriseChantierIds.isEmpty()) {
+            return List.of();
+        }
+        List<UUID> salarieIds = affectationSalarieChantierRepository
+            .findByChantierIdAndAffectationEntrepriseChantierIdIn(chantierId, affectationEntrepriseChantierIds).stream()
+            .map(AffectationSalarieChantier::getSalarieId)
+            .distinct()
+            .toList();
+        return salarieRepository.findAllById(salarieIds);
     }
 
     /** Salariés affectés à un chantier accessible par ce client (tous ses chantiers, ou

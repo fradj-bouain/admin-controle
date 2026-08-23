@@ -68,6 +68,18 @@ public class AffectationEntrepriseChantier extends Auditable {
     @Column(name = "email_contact")
     private String emailContact;
 
+    /** Téléphone de contact propre à CETTE relation (entreprise, chantier), distinct de
+        {@code Entreprise.telephone} — même modèle que emailContact. Optionnel : null =
+        pas de téléphone spécifique, on retombe sur le téléphone principal de l'entreprise. */
+    @Column(name = "telephone_contact")
+    private String telephoneContact;
+
+    /** Adresse d'intervention propre à CE chantier, distincte de l'adresse du siège social
+        ({@code Entreprise.adresse}) — même modèle que emailContact. Optionnel : null = pas
+        d'adresse spécifique, on retombe sur l'adresse du siège de l'entreprise. */
+    @Column(name = "adresse_contact")
+    private String adresseContact;
+
     /**
      * @param parente l'affectation du parent SUR CE MÊME CHANTIER, requise pour STT1/STT2,
      *                interdite pour PRINCIPALE. La cohérence hiérarchique (STT1 doit avoir
@@ -121,8 +133,13 @@ public class AffectationEntrepriseChantier extends Auditable {
         return "ACTIF".equals(statut);
     }
 
-    public void modifierEmailContact(String emailContact) {
+    /** Met à jour les trois coordonnées de contact propres à cette relation (entreprise,
+        chantier) en une seule fois — email/téléphone/adresse, chacun optionnel (null = pas
+        de valeur spécifique à ce chantier, on retombe sur les coordonnées de l'entreprise). */
+    public void modifierCoordonneesContact(String emailContact, String telephoneContact, String adresseContact) {
         this.emailContact = emailContact;
+        this.telephoneContact = telephoneContact;
+        this.adresseContact = adresseContact;
     }
 
     /** Une Principale ou un STT1 peuvent gérer des sous-traitants ; un STT2 ne peut gérer que ses salariés. */

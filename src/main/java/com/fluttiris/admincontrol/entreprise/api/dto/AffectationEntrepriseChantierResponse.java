@@ -24,9 +24,12 @@ public record AffectationEntrepriseChantierResponse(
     LocalDate dateDebut,
     LocalDate dateFin,
     String statut,
-    // Email de contact propre à CETTE relation (entreprise, chantier) — voir
-    // AffectationEntrepriseChantier.emailContact. Null = pas de contact spécifique.
-    String emailContact
+    // Email/téléphone/adresse de contact propres à CETTE relation (entreprise, chantier) —
+    // voir AffectationEntrepriseChantier.emailContact/telephoneContact/adresseContact.
+    // Chacun null = pas de valeur spécifique à ce chantier.
+    String emailContact,
+    String telephoneContact,
+    String adresseContact
 ) {
     public static AffectationEntrepriseChantierResponse from(AffectationEntrepriseChantier a) {
         return from(a, null);
@@ -40,6 +43,6 @@ public record AffectationEntrepriseChantierResponse(
                                                                String nomChantier) {
         return new AffectationEntrepriseChantierResponse(a.getId(), a.getChantierId(), nomChantier, a.getEntrepriseId(),
             raisonSocialeEntreprise, a.getRole(), a.getAffectationParenteId(), a.getDateDebut(), a.getDateFin(), a.getStatut(),
-            a.getEmailContact());
+            a.getEmailContact(), a.getTelephoneContact(), a.getAdresseContact());
     }
 }

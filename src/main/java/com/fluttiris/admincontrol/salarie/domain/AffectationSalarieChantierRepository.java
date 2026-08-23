@@ -12,6 +12,13 @@ public interface AffectationSalarieChantierRepository extends JpaRepository<Affe
 
     List<AffectationSalarieChantier> findByChantierIdIn(Collection<UUID> chantierIds);
 
+    // Salariés d'UNE entreprise sur CE chantier précisément — voir règle validée "Entreprise +
+    // Chantier = contexte d'affectation" (SalarieService.listerParEntrepriseEtChantier). Passe
+    // par affectationEntrepriseChantierId (pas entrepriseId, absent de cette table) car une
+    // même entreprise peut porter plusieurs rôles sur ce même chantier (Principale ET STT1).
+    List<AffectationSalarieChantier> findByChantierIdAndAffectationEntrepriseChantierIdIn(
+        UUID chantierId, Collection<UUID> affectationEntrepriseChantierIds);
+
     List<AffectationSalarieChantier> findBySalarieId(UUID salarieId);
 
     // Affectations "en cours" (sans date de fin) pour un lot de salariés en une seule
