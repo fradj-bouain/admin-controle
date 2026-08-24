@@ -1,11 +1,14 @@
 package com.fluttiris.admincontrol.messagerie.domain;
 
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -14,6 +17,8 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -45,10 +50,14 @@ public class Message {
     @Column(nullable = false)
     private String contenu;
 
-    /** Document attendu si ce message est une "demande de document" (voir salarie/entreprise-detail
-        demanderDocument) — permet au destinataire de déposer le fichier directement depuis le message. */
+    /** Documents attendus si ce message est une "demande de document(s)" (voir salarie/entreprise-detail
+        demanderDocuments) — permet au destinataire de déposer directement, depuis le message, un
+        fichier pour chacun. Peut viser un seul document (cas historique) ou plusieurs à la fois
+        (sélection groupée, un seul message au lieu d'un par document). */
+    @ElementCollection
+    @CollectionTable(name = "message_type_document", joinColumns = @JoinColumn(name = "message_id"))
     @Column(name = "type_document_id")
-    private UUID typeDocumentId;
+    private List<UUID> typeDocumentIds = new ArrayList<>();
 
     /** Renseigné seulement quand la demande vise le document d'un salarié précis
         (sinon le document attendu est celui de l'entreprise destinataire elle-même). */
@@ -74,7 +83,7 @@ public class Message {
     }
 
     public static Message envoyer(UUID expediteurUtilisateurId, UUID chantierId, DestinataireType destinataireType,
-                                   UUID destinataireId, String sujet, String contenu, UUID typeDocumentId, UUID salarieId) {
+                                   UUID destinataireId, String sujet, String contenu, List<UUID> typeDocumentIds, UUID salarieId) {
         Message message = new Message();
         message.expediteurUtilisateurId = expediteurUtilisateurId;
         message.chantierId = chantierId;
@@ -82,7 +91,7 @@ public class Message {
         message.destinataireId = destinataireId;
         message.sujet = sujet;
         message.contenu = contenu;
-        message.typeDocumentId = typeDocumentId;
+        message.typeDocumentIds = typeDocumentIds != null ? typeDocumentIds : new ArrayList<>();
         message.salarieId = salarieId;
         return message;
     }

@@ -4,6 +4,7 @@ import com.fluttiris.admincontrol.messagerie.domain.DestinataireType;
 import com.fluttiris.admincontrol.messagerie.domain.Message;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public record MessageResponse(
@@ -14,7 +15,7 @@ public record MessageResponse(
     UUID destinataireId,
     String sujet,
     String contenu,
-    UUID typeDocumentId,
+    List<UUID> typeDocumentIds,
     UUID salarieId,
     boolean lu,
     UUID luParUtilisateurId,
@@ -24,7 +25,7 @@ public record MessageResponse(
     public static MessageResponse from(Message m) {
         return new MessageResponse(m.getId(), m.getExpediteurUtilisateurId(), m.getChantierId(),
             m.getDestinataireType(), m.getDestinataireId(), m.getSujet(), m.getContenu(),
-            m.getTypeDocumentId(), m.getSalarieId(), m.isLu(),
+            m.getTypeDocumentIds(), m.getSalarieId(), m.isLu(),
             m.getLuParUtilisateurId(), m.getDateLu(), m.getCreatedAt());
     }
 }
