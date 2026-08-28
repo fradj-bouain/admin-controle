@@ -129,6 +129,18 @@ public class ChantierService {
         return chantier;
     }
 
+    public Chantier retirerChefChantier(UUID id) {
+        Chantier chantier = obtenir(id);
+        chantier.retirerChefChantier();
+        return chantier;
+    }
+
+    public Chantier retirerSalarieResponsable(UUID id) {
+        Chantier chantier = obtenir(id);
+        chantier.retirerSalarieResponsable();
+        return chantier;
+    }
+
     public void supprimer(UUID id) {
         Chantier chantier = obtenir(id);
         chantier.supprimer();

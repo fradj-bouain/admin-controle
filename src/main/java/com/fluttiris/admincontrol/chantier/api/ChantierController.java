@@ -110,6 +110,20 @@ public class ChantierController {
         return ChantierResponse.from(chantierService.affecterSalarieResponsable(id, salarieId));
     }
 
+    // Retire la désignation sans en affecter une autre — voir Chantier.retirerChefChantier
+    // (bouton étoile sur la personne déjà désignée, dans la liste Utilisateurs du Back Office).
+    @DeleteMapping("/{id}/chef-chantier")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ChantierResponse retirerChefChantier(@PathVariable UUID id) {
+        return ChantierResponse.from(chantierService.retirerChefChantier(id));
+    }
+
+    @DeleteMapping("/{id}/salarie-responsable")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ChantierResponse retirerSalarieResponsable(@PathVariable UUID id) {
+        return ChantierResponse.from(chantierService.retirerSalarieResponsable(id));
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Void> supprimer(@PathVariable UUID id) {

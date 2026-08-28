@@ -141,7 +141,19 @@ public class Chantier extends Auditable {
         this.chefChantierUtilisateurId = utilisateurId;
     }
 
+    /** Retire la désignation sans en affecter une autre — utilisé par le bouton étoile
+        (cliquer sur l'étoile de la personne déjà désignée l'enlève) directement dans la
+        liste Utilisateurs du Back Office, plus de carte "Responsable du chantier" à part. */
+    public void retirerChefChantier() {
+        this.chefChantierUtilisateurId = null;
+    }
+
     public void affecterSalarieResponsable(UUID salarieId) {
         this.salarieResponsableId = salarieId;
+    }
+
+    /** Miroir de retirerChefChantier() pour le salarié responsable — voir la liste Salariés. */
+    public void retirerSalarieResponsable() {
+        this.salarieResponsableId = null;
     }
 }
