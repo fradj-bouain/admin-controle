@@ -11,6 +11,13 @@ import com.fluttiris.admincontrol.client.domain.Client;
 import com.fluttiris.admincontrol.client.domain.ClientRepository;
 import com.fluttiris.admincontrol.configuration.domain.CorpsDeMetierRepository;
 import com.fluttiris.admincontrol.configuration.domain.PaysRepository;
+import com.fluttiris.admincontrol.controle.domain.Controle;
+import com.fluttiris.admincontrol.controle.domain.ControleRepository;
+import com.fluttiris.admincontrol.controle.domain.RapportControle;
+import com.fluttiris.admincontrol.controle.domain.RapportControleRepository;
+import com.fluttiris.admincontrol.messagerie.domain.DestinataireType;
+import com.fluttiris.admincontrol.messagerie.domain.Message;
+import com.fluttiris.admincontrol.messagerie.domain.MessageRepository;
 import com.fluttiris.admincontrol.configuration.domain.SalarieFonction;
 import com.fluttiris.admincontrol.configuration.domain.SalarieFonctionRepository;
 import com.fluttiris.admincontrol.configuration.domain.TypeContratSalarie;
@@ -31,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -63,8 +71,16 @@ import java.util.stream.Collectors;
  * </ul>
  *
  * Tous les comptes utilisateur créés ici ont pour mot de passe {@code test1234}.
+ *
+ * Complété (demande explicite : rien de tout ça n'était testable jusqu'ici avec des données
+ * réelles) avec un niveau STT2 dans la hiérarchie de sous-traitance, des Contrôles + Rapports
+ * de contrôle rattachés au compte {@code controleur.test}, et quelques Messages — voir
+ * {@link #seedControlesEtRapports} / {@link #seedMessages}. @Order(2) : tourne APRÈS
+ * TestAccountsSeeder (@Order(1)), dont les comptes admin.local/controleur.test doivent déjà
+ * exister pour être réutilisés ici.
  */
 @Component
+@Order(2)
 @RequiredArgsConstructor
 public class DemoDataSeeder implements ApplicationRunner {
 
@@ -84,6 +100,9 @@ public class DemoDataSeeder implements ApplicationRunner {
     private final TypeSalarieRepository typeSalarieRepository;
     private final TypeContratSalarieRepository typeContratSalarieRepository;
     private final SalarieFonctionRepository salarieFonctionRepository;
+    private final ControleRepository controleRepository;
+    private final RapportControleRepository rapportControleRepository;
+    private final MessageRepository messageRepository;
     private final PasswordEncoder passwordEncoder;
 
     /** Une entreprise BTP = un corps de métier réel (voir V1__init_schema.sql) + un pool de
@@ -176,8 +195,17 @@ public class DemoDataSeeder implements ApplicationRunner {
         List<AffectationEntrepriseChantier> affectationsPrincipales = seedAffectationsEntrepriseChantier(entreprises, chantiers);
         seedAffectationsSalarieChantier(chantiers, salariesParEntreprise, affectationsPrincipales);
 
+        // Réutilisent les comptes créés par TestAccountsSeeder (voir @Order) — se connecter avec
+        // controleur.test/admin.local montre directement des données réelles, pas des listes vides.
+        UUID adminId = utilisateurRepository.findByUsername("admin.local").map(Utilisateur::getId).orElse(null);
+        utilisateurRepository.findByUsername("controleur.test").ifPresentOrElse(
+            controleur -> seedControlesEtRapports(chantiers, controleur.getId(), controleur.getControleTiersId(), adminId),
+            () -> log.warn("Compte controleur.test introuvable — contrôles/rapports de démo non créés."));
+        seedMessages(chantiers, entreprises, clients, salariesParEntreprise, adminId);
+
         log.warn("Jeu de données de démo créé : {} entreprises ({} comptes ENTREPRISE, {} salariés), "
-                + "{} clients ({} comptes CLIENT), {} chantiers. Mot de passe de tous les comptes créés : {}",
+                + "{} clients ({} comptes CLIENT), {} chantiers, hiérarchie PRINCIPALE/STT1/STT2, "
+                + "contrôles/rapports, messages. Mot de passe de tous les comptes créés : {}",
             entreprises.size(), entreprises.size() * 3, entreprises.size() * 10,
             clients.size(), clients.size() * 5, chantiers.size(), PASSWORD);
     }
@@ -313,12 +341,15 @@ public class DemoDataSeeder implements ApplicationRunner {
                 chantiers.get(c).getId(), principale.getId(), RoleEntreprise.PRINCIPALE, null);
             principales.add(affectationEntrepriseChantierRepository.save(affectation));
         }
-        // Illustre la sous-traitance (demande client déjà traitée pour la visibilité STT, voir
-        // ScopeAuthorizationService) : l'entreprise Électricité Générale Moreau (index 2)
-        // intervient aussi comme STT1 sur le chantier 0, sous la principale (BTP Construction Rhône).
+        // Illustre la sous-traitance à 2 niveaux (demande explicite : STT2 jamais présent jusqu'ici,
+        // impossible à tester) : sur le chantier 0, Électricité Générale Moreau (index 2) intervient
+        // comme STT1 sous la principale BTP Construction Rhône, et Plomberie Sanitaire Lefebvre
+        // (index 3) intervient comme STT2 sous CE STT1 — une vraie hiérarchie à 3 niveaux.
         AffectationEntrepriseChantier principaleChantier0 = principales.get(0);
-        affectationEntrepriseChantierRepository.save(AffectationEntrepriseChantier.creer(
+        AffectationEntrepriseChantier stt1Chantier0 = affectationEntrepriseChantierRepository.save(AffectationEntrepriseChantier.creer(
             chantiers.get(0).getId(), entreprises.get(2).getId(), RoleEntreprise.STT1, principaleChantier0));
+        affectationEntrepriseChantierRepository.save(AffectationEntrepriseChantier.creer(
+            chantiers.get(0).getId(), entreprises.get(3).getId(), RoleEntreprise.STT2, stt1Chantier0));
         return principales;
     }
 
@@ -341,6 +372,74 @@ public class DemoDataSeeder implements ApplicationRunner {
                 affectationSalarieChantierRepository.save(affectation);
             }
         }
+    }
+
+    /** Contrôles + rapports rattachés au compte controleur.test (voir run(), @Order) — pour
+        chaque chantier : un ancien contrôle toujours terminé + rapporté (historique réel à
+        consulter), puis un contrôle récent dont l'issue tourne selon le chantier pour couvrir
+        les 3 états affichés côté front (Terminé / En retard / Programmé — voir
+        ChantierListComponent.prochainControleEnRetard et statutControle). */
+    private void seedControlesEtRapports(List<Chantier> chantiers, UUID controleurUtilisateurId,
+                                          UUID controleTiersId, UUID responsableUtilisateurId) {
+        LocalDate aujourdHui = LocalDate.now();
+        for (int c = 0; c < chantiers.size(); c++) {
+            UUID chantierId = chantiers.get(c).getId();
+
+            Controle ancien = controleRepository.save(Controle.creer(
+                chantierId, controleurUtilisateurId, aujourdHui.minusMonths(4).plusDays(c),
+                "Contrôle de conformité initial — RAS.", controleTiersId, aujourdHui.minusMonths(4).plusDays(c), true));
+            rapportControleRepository.save(RapportControle.creer(
+                ancien.getId(), 3, 3, 0, 0, 0, 1, 0, responsableUtilisateurId));
+
+            switch (c % 3) {
+                case 0 -> {
+                    Controle termine = controleRepository.save(Controle.creer(
+                        chantierId, controleurUtilisateurId, aujourdHui.minusDays(10 + c),
+                        "Contrôle périodique — situation conforme.", controleTiersId, aujourdHui.minusDays(10 + c), true));
+                    rapportControleRepository.save(RapportControle.creer(
+                        termine.getId(), 4, 4, 0, 1, 1, 2, 0, responsableUtilisateurId));
+                }
+                case 1 -> controleRepository.save(Controle.creer(
+                    chantierId, controleurUtilisateurId, aujourdHui.minusDays(5 + c),
+                    "Contrôle périodique à finaliser.", controleTiersId, null, false));
+                default -> controleRepository.save(Controle.creer(
+                    chantierId, controleurUtilisateurId, aujourdHui.plusDays(15 + c),
+                    null, controleTiersId, null, false));
+            }
+        }
+    }
+
+    /** Quelques messages de démo (demande explicite : aucun jusqu'ici, historique des messages
+        toujours vide) — envoyés par admin.local vers une Entreprise, un Client et un Salarié
+        précis, pour couvrir les 3 contextes où "Historique des messages" est affiché dans
+        l'app (fiches Entreprise/Client/Salarié). Rien créé si admin.local est introuvable. */
+    private void seedMessages(List<Chantier> chantiers, List<Entreprise> entreprises, List<Client> clients,
+                               List<List<Salarie>> salariesParEntreprise, UUID adminId) {
+        if (adminId == null) {
+            log.warn("Compte admin.local introuvable — messages de démo non créés.");
+            return;
+        }
+        UUID chantier0Id = chantiers.get(0).getId();
+        Salarie premierSalarie = salariesParEntreprise.get(0).get(0);
+
+        messageRepository.save(Message.envoyer(adminId, chantier0Id, DestinataireType.ENTREPRISE, entreprises.get(0).getId(),
+            "Document à fournir — attestation de vigilance URSSAF",
+            "<p>Bonjour,</p><p>Merci de nous transmettre l'attestation de vigilance URSSAF à jour pour le chantier "
+                + chantiers.get(0).getNom() + ".</p><p>Cordialement.</p>"));
+
+        messageRepository.save(Message.envoyer(adminId, chantier0Id, DestinataireType.CLIENT, clients.get(0).getId(),
+            "Point d'avancement — " + chantiers.get(0).getNom(),
+            "<p>Bonjour,</p><p>Le contrôle de conformité mensuel a été réalisé, aucune anomalie relevée.</p><p>Cordialement.</p>"));
+
+        messageRepository.save(Message.envoyer(adminId, chantier0Id, DestinataireType.ENTREPRISE, entreprises.get(0).getId(),
+            "Document à fournir — carte BTP de " + premierSalarie.getPrenom() + " " + premierSalarie.getNom(),
+            "<p>Bonjour,</p><p>Merci de nous transmettre la carte BTP de " + premierSalarie.getPrenom() + " "
+                + premierSalarie.getNom() + ".</p><p>Cordialement.</p>",
+            null, premierSalarie.getId()));
+
+        messageRepository.save(Message.envoyer(adminId, chantiers.get(4).getId(), DestinataireType.ENTREPRISE, entreprises.get(3).getId(),
+            "Rappel — document en attente",
+            "<p>Bonjour,</p><p>Dernier rappel : un document obligatoire reste manquant sur ce chantier.</p><p>Cordialement.</p>"));
     }
 
     private Utilisateur creerCompte(String username, String nom, String prenom, String email, Set<String> roles,

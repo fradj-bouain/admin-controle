@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -35,7 +36,10 @@ import java.util.UUID;
  * Mots de passe faibles et connus, à ne jamais laisser survivre au-delà du poste de
  * développement / d'un environnement de démo.
  */
+// @Order(1) : doit tourner AVANT DemoDataSeeder, qui réutilise le compte controleur.test
+// créé ici (controleurUtilisateurId de ses Controle de démo) — voir DemoDataSeeder @Order(2).
 @Component
+@Order(1)
 @RequiredArgsConstructor
 public class TestAccountsSeeder implements ApplicationRunner {
 
