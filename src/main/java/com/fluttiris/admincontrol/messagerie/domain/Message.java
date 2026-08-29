@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
@@ -54,7 +55,7 @@ public class Message {
         demanderDocuments) — permet au destinataire de déposer directement, depuis le message, un
         fichier pour chacun. Peut viser un seul document (cas historique) ou plusieurs à la fois
         (sélection groupée, un seul message au lieu d'un par document). */
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "message_type_document", joinColumns = @JoinColumn(name = "message_id"))
     @Column(name = "type_document_id")
     private List<UUID> typeDocumentIds = new ArrayList<>();
