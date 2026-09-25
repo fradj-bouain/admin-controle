@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.fluttiris.admincontrol.messagerie.application.MessageEmailServiceTest
+-------------------------------------------------------------------------------
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.619 s -- in com.fluttiris.admincontrol.messagerie.application.MessageEmailServiceTest
