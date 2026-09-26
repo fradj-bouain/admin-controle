@@ -1,2 +1,2 @@
-com\fluttiris\admincontrol\messagerie\application\MessageEmailServiceTest.class
+com\fluttiris\admincontrol\common\mail\EmailServiceApiTest.class
 com\fluttiris\admincontrol\entreprise\domain\AffectationEntrepriseChantierTest.class

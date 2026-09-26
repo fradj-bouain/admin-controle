@@ -46,6 +46,9 @@ spring:
 
 app:
   mail-from: ${MAIL_FROM:no-reply@admincontrol-btp.fr}
+  mail-api:
+    url: ${MAIL_API_URL:}
+    token: ${MAIL_API_TOKEN:}
   frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:4300}
   documents:
     storage-dir: ${DOCUMENTS_STORAGE_DIR:./data/documents}
